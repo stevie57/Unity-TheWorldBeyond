@@ -31,14 +31,14 @@ A traditional pre-fabricated game level doesn't work in mixed reality because th
 * The largest playable space that Guardian can encompass is 15x15m. Everything outside of this space can be static and hand-crafted, but everything within it should be dynamic since every home's play area is different. You should create any objects in the playable space directly or indirectly from the scene or cull them from the scene.
 
 ## Using the Scene Directly
-*OVRSceneManager* is used to spawn walls and cubes, which you use directly in the *WorldBeyondManager*. The system creates a polygon mesh for the floor and ceiling by referencing these anchors. Particles line the wall edges and get revealed when a wall is "opened." Additionally, a *NavMeshObstacle* component is on the wall and furniture prefabs so that Oppy can navigate around them. Please see `VirtualRoom.Initialize()` for more information.
+*OVRSceneManager* is used to spawn walls and cubes, which you use directly in the *WorldBeyondManager*. The system creates a polygon mesh for the floor and ceiling by referencing these anchors. Particles line the wall edges and get revealed when a wall is "opened." Additionally, a *NavMeshObstacle* component is on the wall and furniture prefabs so that Oppy can navigate around them. Please see [`VirtualRoom.Initialize()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/VirtualRoom.cs#L212) for more information.
 
 ## Using the Scene Indirectly
-Grass shrubs spawn in a grid on the play area, except within the bounding box of the room. A density map defines the probability of grass appearing in a grid cell as long as it appears outside the room. See `WorldBeyondEnvironment.SpawnObjectsWithMap()` for more information. Other objects, such as trees and rocks, are pre-littered around the space and use the `VirtualRoom.IsPositionInRoom()` function to get deactivated when the game starts. Grass shrubs are also placed around the base of furniture and walls. The system reveals these shrubs when you open any wall. `VirtualRoom.CreateFurnitureDebris()` handles this functionality.
+Grass shrubs spawn in a grid on the play area, except within the bounding box of the room. A density map defines the probability of grass appearing in a grid cell as long as it appears outside the room. See [`WorldBeyondEnvironment.SpawnObjectsWithMap()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/WorldBeyondEnvironment.cs#L61)for more information. Other objects, such as trees and rocks, are pre-littered around the space and use the [`VirtualRoom.IsPositionInRoom()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/VirtualRoom.cs#L987) function to get deactivated when the game starts. Grass shrubs are also placed around the base of furniture and walls. The system reveals these shrubs when you open any wall. [`VirtualRoom.CreateFurnitureDebris()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/VirtualRoom.cs#L818) handles this functionality.
 
 ## Spawning Dynamic Objects
-The coordinates in Unity are completely unrelated to a real space. Finding an unoccupied location in your room can be done using the Scene API. In The World Beyond, we do a line-of-sight raycast from the camera, for example, in `WorldBeyondManager.GetRandomToyPosition()`. Other suggestions for using the Scene API:
-* Get the wall intersections of the room, inset by a small amount, to place an object in the corner. You can copy some of this code from `VirtualRoom.GetClockwiseFloorOutline()` and `SceneMesher.GetInsetDirection()`. Additionally, after calculating a position, you might need to check the furniture data to ensure there isn't something in the way.
+The coordinates in Unity are completely unrelated to a real space. Finding an unoccupied location in your room can be done using the Scene API. In The World Beyond, we do a line-of-sight raycast from the camera, for example, in [`WorldBeyondManager.GetRandomToyPosition()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/WorldBeyondManager.cs#L957). Other suggestions for using the Scene API:
+* Get the wall intersections of the room, inset by a small amount, to place an object in the corner. You can copy some of this code from [`VirtualRoom.GetClockwiseFloorOutline()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/VirtualRoom.cs#L534) and [`SceneMesher.GetInsetDirection()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/SceneMesher.cs#L428). Additionally, after calculating a position, you might need to check the furniture data to ensure there isn't something in the way.
 * Get the bounding box center of the room, and hang a fan or light from the ceiling.
 * Only do raycasts behind the player. Using raycasts is an excellent method for spawning zombies or other hidden elements that only get revealed when the player looks in that direction.
 
@@ -61,14 +61,14 @@ The Shader Masking technique provides much more control at the cost of complexit
 * *Zwrite/ZTest:* As mentioned above, *Zwrite/ZTest* defines if the object's mesh should write its depth to the Z-buffer and read from the Z-buffer for depth testing.
 * *Vertex Shader:* This is where the 3D math happens, converting all the object's mesh vertex positions into a position on the screen.
 * *Fragment Shader:* For simplicity, you can also think of this as a pixel shader or how the screen-space pixel on the object is colored. For example, this shader is where you sample a texture map.
-* *Output:* This is the last line in the *Fragment Shader*. *Output* returns some variation of float4(R,G,B,A). 
+* *Output:* This is the last line in the *Fragment Shader*. *Output* returns some variation of float4(R,G,B,A).
 * *Blending:* This defines how the system will blend the shader's Output pixel with the existing pixel on the screen.
 
-# Voice 
+# Voice
 In The World Beyond, the system unlocks Voice control after opening a wall to the virtual world; Oppy then listens to you when you gaze at her. For detailed instructions on using the Voice SDK, follow the [developer documentation](https://developer.oculus.com/documentation/unity/voice-sdk-overview/). Here are examples of how we use the Voice SDK in The World Beyond:
 
-* *Reaction:*  To play an animation on Oppy (hi, jump) or perform a behavior (come). See `WitConnector.WitResponseReceiver()` for more information.
-* *Transcription:* You can see the results of your command in Oppy's speech bubble. See `WitConnector.LiveTranscriptionHandler()` for more information.
+* *Reaction:*  To play an animation on Oppy (hi, jump) or perform a behavior (come). See [`WitConnector.WitResponseReceiver()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/WitConnector.cs#L171) for more information.
+* *Transcription:* You can see the results of your command in Oppy's speech bubble. See [`WitConnector.LiveTranscriptionHandler()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/WitConnector.cs#L171) for more information.
 
 # Interaction
 You can easily include hands-support using our Interaction components with little understanding of how the code works. You can learn more about the *Interaction SDK* from our documentation [here](https://developer.oculus.com/documentation/unity/unity-isdk-interaction-sdk-overview/). In The World Beyond, we use the *Interaction SDK* to let users grab and release the energy orbs.
@@ -79,10 +79,9 @@ You can easily include hands-support using our Interaction components with littl
 
 # Audio Spatializer
 Audio in The World Beyond uses the *Oculus AudioManager* and *Oculus Spatializer*. Get a deep understanding of it from our documentation [here](https://developer.oculus.com/documentation/unity/audio-spatializer-features/). The mixer for the project exists at `Assets/Audio/SanctuaryAudioMixer.mixer`.
-* You can use simple raycasting for occlusion. For instance, if a sound is in the virtual world behind your Passthrough wall. You can see how we do this in `SoundEntry_Manager.HandleObstructed()`.
-* The system mutes environment audio when all the Passthrough walls are closed. The audio increases as you open each wall. Anytime a wall status changes, the system adjusts the audio accordingly in `AudioManager.SetRoomOpenness()`.
+* You can use simple raycasting for occlusion. For instance, if a sound is in the virtual world behind your Passthrough wall. You can see how we do this in [`SoundEntry_Manager.HandleObstructed()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/SoundEntry_Manager.cs#L94).
+* The system mutes environment audio when all the Passthrough walls are closed. The audio increases as you open each wall. Anytime a wall status changes, the system adjusts the audio accordingly in [`AudioManager.SetRoomOpenness()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/AudioManager.cs#L444).
 
 
 ## Licenses
 This project is released under the [MIT License](./LICENSE).
-

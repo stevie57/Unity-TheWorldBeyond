@@ -568,23 +568,6 @@ namespace Oculus.Platform
 
   public static partial class AbuseReport
   {
-    /// Launch the flow for reporting a user or piece of content. This advanced
-    /// version of the report endpoint allows for submitting reports for worlds and
-    /// other content, as well as customizing the way the report flow operates.
-    /// Returns the ID of the filed report upon success.
-    /// \param content_id The ID of the user or content to report. If filing a user report, the ID may be zero.
-    ///
-    public static Request<Models.LaunchReportFlowResult> LaunchAdvancedReportFlow(UInt64 content_id, AdvancedAbuseReportOptions abuse_report_options = null)
-    {
-      if (Core.IsInitialized())
-      {
-        return new Request<Models.LaunchReportFlowResult>(CAPI.ovr_AbuseReport_LaunchAdvancedReportFlow(content_id, (IntPtr)abuse_report_options));
-      }
-
-      Debug.LogError(Oculus.Platform.Core.PlatformUninitializedError);
-      return null;
-    }
-
   }
 
   public static partial class Achievements

@@ -20,8 +20,12 @@
 
 using System;
 
-namespace Oculus.Interaction.Deprecated
+namespace Oculus.Interaction
 {
-    [Obsolete]
-    public class FloatConstraint { }
+    [Serializable]
+    public class FloatConstraint
+    {
+        public bool Constrain = false;
+        public float Value = 0.0f;
+    }
 }

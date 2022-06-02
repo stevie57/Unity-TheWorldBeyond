@@ -844,8 +844,6 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
 	[HideInInspector, Tooltip("Specify if Insight Passthrough should be enabled. Passthrough layers can only be used if passthrough is enabled.")]
 	public bool isInsightPassthroughEnabled = false;
 
-	#region Feature Fidelity System
-	#endregion
 
 	/// <summary>
 	/// The native XR API being used
@@ -2144,11 +2142,6 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
 
 	private void UpdateHMDEvents()
 	{
-		int sizeofUInt64 = 8;
-		int sizeofInt32 = 4;
-		int sizeofCharPtr = IntPtr.Size;
-		int sizeofGuid = 16;
-
 		while(OVRPlugin.PollEvent(ref eventDataBuffer))
 		{
 			switch(eventDataBuffer.EventType)

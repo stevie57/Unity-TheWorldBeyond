@@ -186,10 +186,8 @@ public class OVRGridCube : MonoBehaviour
 		if(CubeSwitchColor == true)
 			c = Color.blue;
 
-		var cachedTransform = CubeGrid.transform;
-		for (int i = 0; i < cachedTransform.childCount; i++)
+		foreach(Transform child in CubeGrid.transform)
 		{
-			var child = cachedTransform.GetChild(i);
 			Material m = child.GetComponent<Renderer>().material;
 			// Cube line is white down the middle
 			if(m.color == Color.red || m.color == Color.blue)

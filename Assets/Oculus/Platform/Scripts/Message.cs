@@ -74,7 +74,6 @@ namespace Oculus.Platform
     { //TODO - rename this to type; it's already in Message class
       Unknown,
 
-      AbuseReport_LaunchAdvancedReportFlow                = 0x4CB13A6E,
       Achievements_AddCount                               = 0x03E76231,
       Achievements_AddFields                              = 0x14AA2129,
       Achievements_GetAllDefinitions                      = 0x03D3458D,
@@ -654,10 +653,6 @@ namespace Oculus.Platform
         case Message.MessageType.Notification_GroupPresence_InvitationsSent:
         case Message.MessageType.Notification_Session_InvitationsSent:
           message = new MessageWithLaunchInvitePanelFlowResult(messageHandle);
-          break;
-
-        case Message.MessageType.AbuseReport_LaunchAdvancedReportFlow:
-          message = new MessageWithLaunchReportFlowResult(messageHandle);
           break;
 
         case Message.MessageType.User_LaunchUnblockFlow:

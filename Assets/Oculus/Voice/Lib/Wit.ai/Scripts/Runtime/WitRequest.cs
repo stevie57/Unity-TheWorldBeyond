@@ -382,7 +382,7 @@ namespace Facebook.WitAi
             }
 #endif
 
-            _request.UserAgent = $"voice-sdk-40.0.0.11.333,wit-unity-{WIT_SDK_VERSION},{operatingSystem},{deviceModel},{configId},{appIdentifier}";
+            _request.UserAgent = $"voice-sdk-40.0.0.93.333,wit-unity-{WIT_SDK_VERSION},{operatingSystem},{deviceModel},{configId},{appIdentifier}";
 
 #if UNITY_EDITOR
             _request.UserAgent += ",Editor";

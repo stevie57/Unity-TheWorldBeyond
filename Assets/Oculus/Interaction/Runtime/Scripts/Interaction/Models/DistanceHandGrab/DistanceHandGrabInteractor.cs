@@ -163,7 +163,7 @@ namespace Oculus.Interaction.HandPosing
 
             _trackedPinchPose = _pinchPoint.GetPose();
 
-            if (_currentSnap.Interactable != null
+            if (!SnapAddress.IsNullOrInvalid(_currentSnap)
                 && _currentSnap.SnappedToPinch)
             {
                 if (State == InteractorState.Select)
@@ -185,7 +185,7 @@ namespace Oculus.Interaction.HandPosing
         {
             base.DoHoverUpdate();
 
-            if (Interactable != null)
+            if (_currentSnap.IsValidAddress && Interactable != null)
             {
                 SnapStrength = HandGrab.ComputeHandGrabScore(this, Interactable,
                     out GrabTypeFlags hoverGrabTypes);
@@ -227,7 +227,7 @@ namespace Oculus.Interaction.HandPosing
 
         protected override void InteractableSelected(DistanceHandGrabInteractable interactable)
         {
-            if (_currentSnap.Interactable == null)
+            if (SnapAddress.IsNullOrInvalid(_currentSnap))
             {
                 base.InteractableSelected(interactable);
                 return;
@@ -329,8 +329,8 @@ namespace Oculus.Interaction.HandPosing
 
         protected override DistanceHandGrabInteractable ComputeCandidate()
         {
-            bool keepCurrent = _immediateAddress.Interactable != null
-               && _detector.IsPointingWithoutAid(_immediateAddress.Interactable.Colliders);
+            bool keepCurrent = _immediateAddress.IsValidAddress
+                && _detector.IsPointingWithoutAid(_immediateAddress.Interactable.Colliders);
 
             if (!keepCurrent)
             {
@@ -404,7 +404,7 @@ namespace Oculus.Interaction.HandPosing
             }
 
             if (closestInteractable == null
-                && snapAddress.Interactable != null
+                && snapAddress.IsValidAddress
                 && !_detector.IsWithinDeselectionRange(snapAddress.Interactable.Colliders))
             {
                 snapAddress.Clear();

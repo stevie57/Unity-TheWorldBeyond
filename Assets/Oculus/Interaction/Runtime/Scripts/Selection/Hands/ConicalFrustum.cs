@@ -148,7 +148,6 @@ namespace Oculus.Interaction
 
         public bool HitsCollider(Collider collider, out float score, out Vector3 point)
         {
-            if (collider == null) { score = 0; point = Vector3.zero; return false; }
             Vector3 centerPosition = collider.bounds.center;
             Vector3 projectedCenter = Pose.position
                 + Vector3.Project(centerPosition - Pose.position, Pose.forward);

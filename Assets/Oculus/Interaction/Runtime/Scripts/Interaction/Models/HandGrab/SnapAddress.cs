@@ -32,6 +32,7 @@ namespace Oculus.Interaction.HandPosing
     {
         public TSnappable Interactable { get; set; }
         public ref Pose SnapPoint => ref _snapPoint;
+        public bool IsValidAddress => Interactable != null;
 
         public HandPose HandPose => _isHandPoseValid ? _handPose : null;
 
@@ -68,6 +69,11 @@ namespace Oculus.Interaction.HandPosing
             Interactable = null;
             SnappedToPinch = false;
             _isHandPoseValid = false;
+        }
+
+        public static bool IsNullOrInvalid(SnapAddress<TSnappable> snapAddress)
+        {
+            return snapAddress == null || !snapAddress.IsValidAddress;
         }
     }
 }

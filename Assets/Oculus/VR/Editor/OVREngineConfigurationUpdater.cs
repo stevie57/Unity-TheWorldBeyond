@@ -53,7 +53,7 @@ class OVREngineConfigurationUpdater
 
 		Debug.Log("Using required project settings: " + setPrefsForUtilities);
 	}
-	
+
 	private static readonly string dashSupportEnableConfirmedKey = "Oculus_Utilities_OVREngineConfiguration_DashSupportEnableConfirmed_" + Application.unityVersion + OVRManager.utilitiesVersion;
 	private static bool dashSupportEnableConfirmed
 	{
@@ -91,7 +91,7 @@ class OVREngineConfigurationUpdater
 	{
 		if (!setPrefsForUtilities)
 			return;
-		
+
 		EnforceBundleId();
 		EnforceVRSupport();
 		EnforceInstallLocation();
@@ -145,7 +145,7 @@ class OVREngineConfigurationUpdater
 		if (PlayerSettings.virtualRealitySupported)
 #pragma warning restore 618
 			return;
-		
+
 		var mgrs = GameObject.FindObjectsOfType<OVRManager>();
 		for (int i = 0; i < mgrs.Length; ++i)
 		{
@@ -179,7 +179,7 @@ class OVREngineConfigurationUpdater
 		}
 #pragma warning restore 618
 #endif
-		
+
 #if USING_XR_SDK || !REQUIRES_XR_SDK
 		if (PlayerSettings.applicationIdentifier == "" || PlayerSettings.applicationIdentifier == "com.Company.ProductName")
 		{

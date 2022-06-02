@@ -18,10 +18,16 @@
  * limitations under the License.
  */
 
-using System;
+using System.Collections.Generic;
+using UnityEngine;
 
-namespace Oculus.Interaction.Deprecated
+namespace Oculus.Interaction
 {
-    [Obsolete]
-    public interface ITransformer { }
+    public interface ITransformer
+    {
+        void Initialize(IGrabbable grabbable);
+        void BeginTransform();
+        void UpdateTransform();
+        void EndTransform();
+    }
 }

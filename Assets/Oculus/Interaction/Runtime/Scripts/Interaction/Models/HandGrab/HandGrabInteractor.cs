@@ -158,7 +158,7 @@ namespace Oculus.Interaction.HandPosing
 
             _trackedPinchPose = _pinchPoint.GetPose();
 
-            if (_currentSnap.Interactable != null
+            if (!SnapAddress.IsNullOrInvalid(_currentSnap)
                 && _currentSnap.SnappedToPinch)
             {
                 if (State == InteractorState.Select)
@@ -190,7 +190,14 @@ namespace Oculus.Interaction.HandPosing
                 return;
             }
 
-            if (_currentSnap.Interactable != null)
+            if (_interactable != _candidate)
+            {
+                Unhover();
+                Hover();
+                return;
+            }
+
+            if (_currentSnap.IsValidAddress)
             {
                 SnapStrength = HandGrab.ComputeHandGrabScore(this, Interactable,
                     out GrabTypeFlags hoverGrabTypes);
@@ -251,7 +258,7 @@ namespace Oculus.Interaction.HandPosing
         /// <param name="snap">The selected Snap Data </param>
         protected override void InteractableSelected(HandGrabInteractable interactable)
         {
-            if (_currentSnap.Interactable == null)
+            if (SnapAddress.IsNullOrInvalid(_currentSnap))
             {
                 base.InteractableSelected(interactable);
                 return;

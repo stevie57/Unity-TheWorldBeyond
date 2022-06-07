@@ -1364,7 +1364,11 @@ public class WorldBeyondManager : MonoBehaviour
         {
             bool L_hand = _gameController == OVRInput.Controller.LHand;
             OVRSkeleton refHand = (_gameController == OVRInput.Controller.LHand) ? _leftHand : _rightHand;
-
+            Oculus.Interaction.HandVisual refHandVisual = (_gameController == OVRInput.Controller.LHand) ? _leftHandVisual : _rightHandVisual;
+            if (refHandVisual.ForceOffVisibility)
+            {
+                return;
+            }
             // if tuning these values, make your life easier by enabling the DebugAxis objects on the Multitoy prefab
             handPos = L_hand ? _leftPointerOffset.transform.position : _rightPointerOffset.transform.position;
             Vector3 handFwd = L_hand ? _leftPointerOffset.transform.rotation * _leftPointerOffset.Rotation * Vector3.up : _rightPointerOffset.transform.rotation * _rightPointerOffset.Rotation * Vector3.up;
@@ -1386,7 +1390,8 @@ public class WorldBeyondManager : MonoBehaviour
     public void CalculateFistStrength()
     {
         OVRSkeleton refHand = (_gameController == OVRInput.Controller.LHand) ? _leftHand : _rightHand;
-        if (!refHand || !_usingHands)
+        Oculus.Interaction.HandVisual refHandVisual = (_gameController == OVRInput.Controller.LHand) ? _leftHandVisual : _rightHandVisual;
+        if (!_usingHands || refHandVisual.ForceOffVisibility)
         {
             return;
         }

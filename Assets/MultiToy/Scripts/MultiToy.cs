@@ -103,7 +103,7 @@ public class MultiToy : MonoBehaviour
             {
                 _toys[_toyIndex].ActionUp();
             }
-        } 
+        }
     }
 
     private void Awake()
@@ -203,12 +203,12 @@ public class MultiToy : MonoBehaviour
                 // palm up: prepare room framer
                 float palmUp = Vector3.Dot(mainCam.right, controllerRot * Vector3.right);
                 _toyIndex = (palmUp < 0.0f && _wallToyUnlocked && !_grabbedBall) ? _wallToyID : _toyIndex;
-               
+
                 if (handOutOfView || WorldBeyondManager.Instance._pet.IsGameOver())
                 {
                     _toyIndex = -1;
                 }
-                
+
                 if (lastToy != _toyIndex)
                 {
                     if (lastToy >= 0)
@@ -675,6 +675,10 @@ public class MultiToy : MonoBehaviour
     {
         if (WorldBeyondManager.Instance._currentChapter >= WorldBeyondManager.GameChapter.SearchForOppy)
         {
+            if (_toys[_toyIndex] == null)
+            {
+                return;
+            }
             ShowToy(pause);
             if (pause)
             {
@@ -682,7 +686,7 @@ public class MultiToy : MonoBehaviour
             }
             else
             {
-            
+
                 _toys[_toyIndex].Deactivate();
             }
         }

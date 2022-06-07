@@ -184,7 +184,9 @@ public class WorldBeyondManager : MonoBehaviour
 
     public void Start()
     {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || UNITY_ANDROID
         OVRManager.eyeFovPremultipliedAlphaModeEnabled = false;
+#endif
 
         if (MultiToy.Instance) MultiToy.Instance.InitializeToys();
         _pet.Initialize();
@@ -304,7 +306,7 @@ public class WorldBeyondManager : MonoBehaviour
         bool noHiddenBall = (_hiddenBallCollectable == null);
         bool flashlightActive = MultiToy.Instance.IsFlashlightActive();
         bool validMode = (_currentChapter > GameChapter.SearchForOppy && _currentChapter < GameChapter.Ending);
-        
+
         // note: this logic only executes after Oppy enters reality
         // before that, the experience is scripted, so balls shouldn't spawn so randomly
         if (flashlightActive && noHiddenBall && _oppyDiscoveryCount >= 2 && validMode)
@@ -316,7 +318,7 @@ public class WorldBeyondManager : MonoBehaviour
                 _ballSpawnTimer = Random.Range(_spawnTimeMin, _spawnTimeMax);
             }
         }
-        
+
         if (_shouldSpawnBall)
         {
             SpawnHiddenBall();
@@ -753,7 +755,7 @@ public class WorldBeyondManager : MonoBehaviour
                 {
                     closestAngle = thisViewAngle;
                     closestBall = bc;
-                }  
+                }
             }
         }
         return closestBall;
@@ -1106,7 +1108,7 @@ public class WorldBeyondManager : MonoBehaviour
                 farthestPosition = distanceToCandidate;
                 finalPos = candidatePos;
             }
-            
+
             startingVec = Quaternion.Euler(0, -180.0f / sliceCount, 0) * startingVec;
         }
 
@@ -1384,7 +1386,7 @@ public class WorldBeyondManager : MonoBehaviour
     public void CalculateFistStrength()
     {
         OVRSkeleton refHand = (_gameController == OVRInput.Controller.LHand) ? _leftHand : _rightHand;
-        if (!refHand || !_usingHands) 
+        if (!refHand || !_usingHands)
         {
             return;
         }

@@ -53,7 +53,8 @@ public class WorldBeyondTutorial : MonoBehaviour
         ERROR_USER_STARTED_OUTSIDE_OF_ROOM,   // user is outside of the room volume, likely from starting in a different guardian/room
         ERROR_NOT_ENOUGH_WALLS,               // fewer than 3 walls, or only non-walls discovered (e.g. user has only set up a desk)
         ERROR_TOO_MANY_WALLS,                 // a closed loop of walls was found, but there are other rooms/walls
-        ERROR_ROOM_IS_OPEN                    // walls don't form a closed loop
+        ERROR_ROOM_IS_OPEN,                   // walls don't form a closed loop
+        ERROR_INTERSECTING_WALLS              // walls are intersecting
     };
     public TutorialMessage _currentMessage { private set; get; } = TutorialMessage.BallSearch;
 
@@ -138,10 +139,13 @@ public class WorldBeyondTutorial : MonoBehaviour
                 _tutorialText.text = "You haven't set up enough walls. Please run Room Setup in Settings > Guardian.";
                 break;
             case TutorialMessage.ERROR_TOO_MANY_WALLS:
-                _tutorialText.text = "Somehow, you have more walls than you should. Please redo your walls in Room Setup in Settings > Guardian.";
+                _tutorialText.text = "Somehow, you have more walls than you should. Please re-create your walls in Room Setup in Settings > Guardian.";
                 break;
             case TutorialMessage.ERROR_ROOM_IS_OPEN:
-                _tutorialText.text = "The World Beyond requires a closed space. Please redo your walls in Room Setup in Settings > Guardian.";
+                _tutorialText.text = "The World Beyond requires a closed space. Please re-create your walls in Room Setup in Settings > Guardian.";
+                break;
+            case TutorialMessage.ERROR_INTERSECTING_WALLS:
+                _tutorialText.text = "It appears that some of your walls overlap. Please re-create your walls in Room Setup in Settings > Guardian";
                 break;
         }
         _currentMessage = message;

@@ -168,7 +168,7 @@ public class SceneMesher : MonoBehaviour
         Vector4 floorTangent = new Vector4(1, 0, 0, 1);
         Vector4 ceilingTangent = new Vector4(-1, 0, 0, 1);
         List<Vector3> insetPoints = new List<Vector3>();
-        
+
         // create floor
         for (int i = 0; i < cornerPoints.Count; i++)
         {
@@ -216,7 +216,7 @@ public class SceneMesher : MonoBehaviour
             Vector3 startPos = cornerPoints[i];
             Vector3 endPos = (i == cornerPoints.Count - 1) ? cornerPoints[0] : cornerPoints[i + 1];
             Vector3 lastPos = (i == 0) ? cornerPoints[cornerPoints.Count - 1] : cornerPoints[i - 1];
-        
+
             // direction to points
             Vector3 thisSegmentDirection = (endPos - startPos).normalized;
             Vector3 lastSegmentDirection = (lastPos - startPos).normalized;
@@ -227,7 +227,7 @@ public class SceneMesher : MonoBehaviour
             MeshColors[vertCounter] = Color.black;
             MeshNormals[vertCounter] = Vector3.down;
             MeshTangents[vertCounter] = ceilingTangent;
-        
+
             // inner points
             int newID = vertCounter + cornerPoints.Count;
             Vector3 insetDirection = GetInsetDirection(lastPos, startPos, endPos);
@@ -242,12 +242,12 @@ public class SceneMesher : MonoBehaviour
             MeshColors[newID] = Color.white;
             MeshNormals[newID] = Vector3.down;
             MeshTangents[newID] = ceilingTangent;
-        
+
             vertCounter++;
         }
         CreateBorderedPolygon(ref MeshTriangles, ref triCounter, wallVertCount + capVertCount, cornerPoints.Count, cornerPoints, true, insetPoints);
         vertCounter += cornerPoints.Count;
-        
+
         // furnishings
         for (int i = 0; i < _furnishings.Length; i++)
         {
@@ -446,59 +446,66 @@ public class SceneMesher : MonoBehaviour
     /// </summary>
     void CreateBorderedPolygon(ref int[] indexArray, ref int indexCounter, int baseCount, int pointsInLoop, List<Vector3> loopPoints = null, bool flipNormal = false, List<Vector3> insetPoints = null)
     {
-        //int baseCount = baseIndex * 8; // 8 because each wall always has 8 vertices
-        for (int j = 0; j < pointsInLoop; j++)
-        {
-            int id1 = ((j + 1) % pointsInLoop);
-            int id2 = pointsInLoop + j;
-
-            indexArray[indexCounter++] = baseCount + j;
-            indexArray[indexCounter++] = baseCount + (flipNormal ? id2 : id1);
-            indexArray[indexCounter++] = baseCount + (flipNormal ? id1 : id2);
-
-            indexArray[indexCounter++] = baseCount + pointsInLoop + ((j + 1) % pointsInLoop);
-            indexArray[indexCounter++] = baseCount + (flipNormal ? id1 : id2);
-            indexArray[indexCounter++] = baseCount + (flipNormal ? id2 : id1);
-        }
-
-        int capTriCount = pointsInLoop - 2;
-
-        if (loopPoints != null)
-        {
-            //use triangulator
-            // WARNING: triangulator fails if any points are perfectly co-linear
-            // in practice this is rare due to floating point imprecision
-            List<Vector2> points2d = new List<Vector2>(loopPoints.Count);
-            for (int i = 0; i < pointsInLoop; i++)
+        try {
+            //int baseCount = baseIndex * 8; // 8 because each wall always has 8 vertices
+            for (int j = 0; j < pointsInLoop; j++)
             {
-                Vector3 refP = insetPoints != null ? insetPoints[i] : loopPoints[i];
-                points2d.Add(new Vector2(refP.x, refP.z));
-            }
+                int id1 = ((j + 1) % pointsInLoop);
+                int id2 = pointsInLoop + j;
 
-            Triangulator triangulator = new Triangulator(points2d.ToArray());
-            int[] indices = triangulator.Triangulate();
-            for (int j = 0; j < capTriCount; j++)
-            {
-                int id0 = pointsInLoop + indices[j * 3];
-                int id1 = pointsInLoop + indices[j * 3 + 1];
-                int id2 = pointsInLoop + indices[j * 3 + 2];
-
-                indexArray[indexCounter++] = baseCount + id0;
+                indexArray[indexCounter++] = baseCount + j;
                 indexArray[indexCounter++] = baseCount + (flipNormal ? id2 : id1);
                 indexArray[indexCounter++] = baseCount + (flipNormal ? id1 : id2);
+
+                indexArray[indexCounter++] = baseCount + pointsInLoop + ((j + 1) % pointsInLoop);
+                indexArray[indexCounter++] = baseCount + (flipNormal ? id1 : id2);
+                indexArray[indexCounter++] = baseCount + (flipNormal ? id2 : id1);
+            }
+
+            int capTriCount = pointsInLoop - 2;
+
+            if (loopPoints != null)
+            {
+                //use triangulator
+                // WARNING: triangulator fails if any points are perfectly co-linear
+                // in practice this is rare due to floating point imprecision
+                List<Vector2> points2d = new List<Vector2>(loopPoints.Count);
+                for (int i = 0; i < pointsInLoop; i++)
+                {
+                    Vector3 refP = insetPoints != null ? insetPoints[i] : loopPoints[i];
+                    points2d.Add(new Vector2(refP.x, refP.z));
+                }
+
+                Triangulator triangulator = new Triangulator(points2d.ToArray());
+                int[] indices = triangulator.Triangulate();
+                for (int j = 0; j < capTriCount; j++)
+                {
+                    int id0 = pointsInLoop + indices[j * 3];
+                    int id1 = pointsInLoop + indices[j * 3 + 1];
+                    int id2 = pointsInLoop + indices[j * 3 + 2];
+
+                    indexArray[indexCounter++] = baseCount + id0;
+                    indexArray[indexCounter++] = baseCount + (flipNormal ? id2 : id1);
+                    indexArray[indexCounter++] = baseCount + (flipNormal ? id1 : id2);
+                }
+            }
+            else
+            {
+                //use simple triangle fan
+                for (int j = 0; j < capTriCount; j++)
+                {
+                    int id1 = pointsInLoop + j + 1;
+                    int id2 = pointsInLoop + j + 2;
+                    indexArray[indexCounter++] = baseCount + pointsInLoop;
+                    indexArray[indexCounter++] = baseCount + (flipNormal ? id2 : id1);
+                    indexArray[indexCounter++] = baseCount + (flipNormal ? id1 : id2);
+                }
             }
         }
-        else
+        catch (IndexOutOfRangeException exception)
         {
-            //use simple triangle fan
-            for (int j = 0; j < capTriCount; j++)
-            {
-                int id1 = pointsInLoop + j + 1;
-                int id2 = pointsInLoop + j + 2;
-                indexArray[indexCounter++] = baseCount + pointsInLoop;
-                indexArray[indexCounter++] = baseCount + (flipNormal ? id2 : id1);
-                indexArray[indexCounter++] = baseCount + (flipNormal ? id1 : id2);
-            }
+            Debug.LogError("Error parsing walls, are the walls intersecting? " + exception.Message);
+            WorldBeyondTutorial.Instance.DisplayMessage(WorldBeyondTutorial.TutorialMessage.ERROR_INTERSECTING_WALLS);
         }
     }
 

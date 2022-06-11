@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -49,7 +50,7 @@ public class VirtualRoom : MonoBehaviour
     // because of anchor imprecision, the room isn't watertight.
     // this extends each surface to hide the cracks.
     const float _edgeBuffer = 0.02f;
-    
+
     List<GameObject> _roomDebris = new List<GameObject>();
 
     MeshRenderer _sceneMesh = null;
@@ -88,7 +89,7 @@ public class VirtualRoom : MonoBehaviour
             }
         }
         yield return new WaitForSeconds(waitTime);
-        
+
         // if closing a wall, delay hiding the neighboring edges
         _roomboxWalls[wallID]._passthroughMesh.gameObject.SetActive(doClose);
 
@@ -527,7 +528,7 @@ public class VirtualRoom : MonoBehaviour
             Destroy(obj);
         }
     }
- 
+
     /// <summary>
     /// The saved walls may not be clockwise, and they may not be in order.
     /// </summary>
@@ -628,70 +629,78 @@ public class VirtualRoom : MonoBehaviour
     /// </summary>
     void CreatePolygonMesh(List<WorldBeyondRoomObject> roomSurfaces, WorldBeyondRoomObject srObject, bool flipNormal)
     {
-        // to avoid precision issues resulting in tiny cracks along the floor/ceiling edges, we want to extend out the polygon by a small amount
-        for (int i = 0; i < _cornerPoints.Count; i++)
-        {
-            Vector3 startPos = _cornerPoints[i];
-            Vector3 endPos = (i == _cornerPoints.Count - 1) ? _cornerPoints[0] : _cornerPoints[i + 1];
-            Vector3 lastPos = (i == 0) ? _cornerPoints[_cornerPoints.Count - 1] : _cornerPoints[i - 1];
-        
-            Vector3 insetDirection = _sceneMesher.GetInsetDirection(lastPos, startPos, endPos);
-            _cornerPoints[i] = _cornerPoints[i] - insetDirection * _edgeBuffer;
+        try {
+            // to avoid precision issues resulting in tiny cracks along the floor/ceiling edges, we want to extend out the polygon by a small amount
+            for (int i = 0; i < _cornerPoints.Count; i++)
+            {
+                Vector3 startPos = _cornerPoints[i];
+                Vector3 endPos = (i == _cornerPoints.Count - 1) ? _cornerPoints[0] : _cornerPoints[i + 1];
+                Vector3 lastPos = (i == 0) ? _cornerPoints[_cornerPoints.Count - 1] : _cornerPoints[i - 1];
+
+                Vector3 insetDirection = _sceneMesher.GetInsetDirection(lastPos, startPos, endPos);
+                _cornerPoints[i] = _cornerPoints[i] - insetDirection * _edgeBuffer;
+            }
+
+            Mesh PolygonMesh = new Mesh();
+            Vector3[] Vertices = new Vector3[_cornerPoints.Count];
+            Vector2[] UVs = new Vector2[Vertices.Length];
+            Color32[] Colors = new Color32[Vertices.Length];
+            Vector3[] Normals = new Vector3[Vertices.Length];
+            Vector4[] Tangents = new Vector4[Vertices.Length];
+            int[] Triangles = new int[(_cornerPoints.Count - 2) * 3];
+
+            for (int i = 0; i < _cornerPoints.Count; i++)
+            {
+                // transform vertex positions first
+                Vector3 offsetPoint = new Vector3(_cornerPoints[i].x, srObject._passthroughMesh.transform.position.y, _cornerPoints[i].z);
+
+                Vertices[i] = srObject._passthroughMesh.transform.InverseTransformPoint(offsetPoint);
+                UVs[i] = new Vector2(_cornerPoints[i].x, _cornerPoints[i].z);
+                Colors[i] = Color.white;
+                Normals[i] = -Vector3.forward;
+                Tangents[i] = new Vector4(1, 0, 0, 1);
+            }
+
+            // triangulate
+            List<Vector2> points2d = new List<Vector2>(_cornerPoints.Count);
+            for (int i = 0; i < _cornerPoints.Count; i++)
+            {
+                points2d.Add(new Vector2(_cornerPoints[i].x, _cornerPoints[i].z));
+            }
+
+            Triangulator triangulator = new Triangulator(points2d.ToArray());
+            int[] indices = triangulator.Triangulate();
+            int indexCounter = 0;
+            for (int j = 0; j < _cornerPoints.Count - 2; j++)
+            {
+                int id0 = indices[j * 3];
+                int id1 = indices[j * 3 + 1];
+                int id2 = indices[j * 3 + 2];
+
+                Triangles[indexCounter++] = id0;
+                Triangles[indexCounter++] = (flipNormal ? id2 : id1);
+                Triangles[indexCounter++] = (flipNormal ? id1 : id2);
+            }
+
+
+            // assign
+            PolygonMesh.Clear();
+            PolygonMesh.name = "PolygonMesh";
+            PolygonMesh.vertices = Vertices;
+            PolygonMesh.uv = UVs;
+            PolygonMesh.colors32 = Colors;
+            PolygonMesh.normals = Normals;
+            PolygonMesh.tangents = Tangents;
+            PolygonMesh.triangles = Triangles;
+            if (srObject._passthroughMesh.gameObject.GetComponent<MeshFilter>())
+            {
+                srObject._passthroughMesh.gameObject.GetComponent<MeshFilter>().mesh = PolygonMesh;
+            }
         }
-
-        Mesh PolygonMesh = new Mesh();
-        Vector3[] Vertices = new Vector3[_cornerPoints.Count];
-        Vector2[] UVs = new Vector2[Vertices.Length];
-        Color32[] Colors = new Color32[Vertices.Length];
-        Vector3[] Normals = new Vector3[Vertices.Length];
-        Vector4[] Tangents = new Vector4[Vertices.Length];
-        int[] Triangles = new int[(_cornerPoints.Count - 2) * 3];
-
-        for (int i = 0; i < _cornerPoints.Count; i++)
+        catch (IndexOutOfRangeException exception)
         {
-            // transform vertex positions first
-            Vector3 offsetPoint = new Vector3(_cornerPoints[i].x, srObject._passthroughMesh.transform.position.y, _cornerPoints[i].z);
-
-            Vertices[i] = srObject._passthroughMesh.transform.InverseTransformPoint(offsetPoint);
-            UVs[i] = new Vector2(_cornerPoints[i].x, _cornerPoints[i].z);
-            Colors[i] = Color.white;
-            Normals[i] = -Vector3.forward;
-            Tangents[i] = new Vector4(1, 0, 0, 1);
-        }
-
-        // triangulate
-        List<Vector2> points2d = new List<Vector2>(_cornerPoints.Count);
-        for (int i = 0; i < _cornerPoints.Count; i++)
-        {
-            points2d.Add(new Vector2(_cornerPoints[i].x, _cornerPoints[i].z));
-        }
-
-        Triangulator triangulator = new Triangulator(points2d.ToArray());
-        int[] indices = triangulator.Triangulate();
-        int indexCounter = 0;
-        for (int j = 0; j < _cornerPoints.Count - 2; j++)
-        {
-            int id0 = indices[j * 3];
-            int id1 = indices[j * 3 + 1];
-            int id2 = indices[j * 3 + 2];
-
-            Triangles[indexCounter++] = id0;
-            Triangles[indexCounter++] = (flipNormal ? id2 : id1);
-            Triangles[indexCounter++] = (flipNormal ? id1 : id2);
-        }
-
-        // assign
-        PolygonMesh.Clear();
-        PolygonMesh.name = "PolygonMesh";
-        PolygonMesh.vertices = Vertices;
-        PolygonMesh.uv = UVs;
-        PolygonMesh.colors32 = Colors;
-        PolygonMesh.normals = Normals;
-        PolygonMesh.tangents = Tangents;
-        PolygonMesh.triangles = Triangles;
-        if (srObject._passthroughMesh.gameObject.GetComponent<MeshFilter>())
-        {
-            srObject._passthroughMesh.gameObject.GetComponent<MeshFilter>().mesh = PolygonMesh;
+            Debug.LogError("Error parsing walls, are the walls intersecting? " + exception.Message);
+            WorldBeyondTutorial.Instance.DisplayMessage(WorldBeyondTutorial.TutorialMessage.ERROR_INTERSECTING_WALLS);
         }
     }
 
@@ -942,7 +951,7 @@ public class VirtualRoom : MonoBehaviour
         {
             return 1f;
         }
-        
+
         // give the ceiling 50% weight
         float totalAmount = _roomboxWalls[_roomboxWalls.Count - 1]._passthroughWallActive ? 0.0f : 0.5f;
 

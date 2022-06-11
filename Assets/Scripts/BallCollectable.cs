@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+using Oculus.Interaction.DistanceReticles;
 using UnityEngine;
 using Oculus.Interaction.HandPosing;
 
@@ -77,8 +78,26 @@ public class BallCollectable : MonoBehaviour
 
     float _eatStartCooldown = 0.0f;
 
+    private MeshRenderer _renderer;
+    private ParticleSystemRenderer _particleSystemRenderer;
+
+    public void ForceInvisible()
+    {
+        _renderer.enabled = false;
+        _shadowObject.enabled = false;
+        _particleSystemRenderer.enabled = false;
+    }
+
+    public void ForceVisible()
+    {
+        _renderer.enabled = true;
+        _shadowObject.enabled = true;
+        _particleSystemRenderer.enabled = true;
+    }
     public void Start()
     {
+        _renderer = GetComponent<MeshRenderer>();
+        _particleSystemRenderer = GetComponent<ParticleSystemRenderer>();
         _sfxBallLoop.SetVolume(0.0f);
         _sfxBallLoop.Play();
         _shadowObject.transform.parent = null;
@@ -266,6 +285,7 @@ public class BallCollectable : MonoBehaviour
     /// </summary>
     public void Throw()
     {
+        ForceVisible();
         Shoot(transform.position, MultiToy.Instance.GetFlashlightDirection());
         MultiToy.Instance.ThrewBall();
         if (WitConnector.Instance) WitConnector.Instance.WitSwitcher(false);
@@ -325,7 +345,7 @@ public class BallCollectable : MonoBehaviour
                 _sfxBallLoop.ResetVolume();
             }
         }
-        
+
         if (_ballState == BallStatus.Released)
         {
             _sfxBallLoop.Stop();
@@ -349,7 +369,7 @@ public class BallCollectable : MonoBehaviour
         float impactDot = Mathf.Abs(Vector3.Dot(impactNormal, velocity.normalized));
         bool intentionalHit = impactDot > 0.7f;
         LayerMask roomObjects = LayerMask.GetMask("Default");
-        
+
         _sfxBallBounce.SetVolume(impactDot);
         _sfxBallBounce.Play();
 

@@ -18,9 +18,14 @@
  * limitations under the License.
  */
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using JetBrains.Annotations;
+using Oculus.Interaction;
+using Oculus.Interaction.DistanceReticles;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class WorldBeyondManager : MonoBehaviour
 {
@@ -130,6 +135,11 @@ public class WorldBeyondManager : MonoBehaviour
     public Oculus.Interaction.HandWristOffset _leftPointerOffset;
     public Oculus.Interaction.HandWristOffset _rightPointerOffset;
 
+    public DistantInteractionLineVisual _interactionLineLeft;
+    public DistantInteractionLineVisual _interactionLineRight;
+
+    private float _leftHandGrabbedBallLastDistance = Mathf.Infinity;
+    private float _rightHandGrabbedBallLastDistance = Mathf.Infinity;
     private void Awake()
     {
         if (!Instance)
@@ -346,6 +356,46 @@ public class WorldBeyondManager : MonoBehaviour
         }
         _vrRoomEffectTimer = Mathf.Clamp01(_vrRoomEffectTimer);
         _vrRoomEffectMaskTimer = Mathf.Clamp01(_vrRoomEffectMaskTimer);
+        HideInvisibleHandAccessories();
+    }
+
+    /// <summary>
+    /// Calculates whether each hand should be visible or not
+    /// </summary>
+    private void HideInvisibleHandAccessories()
+    {
+        bool leftHandHidden = (_usingHands && (!_leftHand.IsDataValid || _leftHandVisual.ForceOffVisibility));
+        bool rightHandHidden = (_usingHands && (!_rightHand.IsDataValid || _rightHandVisual.ForceOffVisibility));
+        var grabbedBall = MultiToy.Instance._grabbedBall;
+
+        // Called before updating distance so that the hidden property is set while the ball is close to the hand
+        UpdateHandVisibility(leftHandHidden, _interactionLineLeft, _leftHandGrabbedBallLastDistance, _gameController == OVRInput.Controller.LHand, grabbedBall);
+        UpdateHandVisibility(rightHandHidden, _interactionLineRight, _rightHandGrabbedBallLastDistance, _gameController == OVRInput.Controller.RHand, grabbedBall);
+
+        // Hidden hands have a position of 0, only update if the hand is visible.
+        if (!leftHandHidden) _leftHandGrabbedBallLastDistance = grabbedBall ? Vector3.Distance(_leftHandAnchor.position, grabbedBall.transform.position): Mathf.Infinity;
+        if (!rightHandHidden) _rightHandGrabbedBallLastDistance = grabbedBall ? Vector3.Distance(_rightHandAnchor.position, grabbedBall.transform.position): Mathf.Infinity;
+    }
+
+    /// <summary>
+    /// Hides the ball, reticule and tutorial if the hand is not tracked anymore.
+    /// Using previousHandToBallDistance to determine whether the current hand is holding the ball
+    /// </summary>
+    private void UpdateHandVisibility(bool handHidden, DistantInteractionLineVisual interactionLine, float previousHandToBallDistance, bool primary, [CanBeNull] BallCollectable grabbedBall)
+    {
+        bool holdingBall = grabbedBall != null && previousHandToBallDistance < 0.2f;
+        if (handHidden)
+        {
+            interactionLine.enabled = false;
+            if (primary) WorldBeyondTutorial.Instance.ForceInvisible();
+            if (holdingBall) grabbedBall.ForceInvisible();
+        }
+        else
+        {
+            interactionLine.enabled = true;
+            if (primary) WorldBeyondTutorial.Instance.ForceVisible();
+            if (holdingBall) grabbedBall.ForceVisible();
+        }
     }
 
     /// <summary>
@@ -1393,6 +1443,7 @@ public class WorldBeyondManager : MonoBehaviour
         Oculus.Interaction.HandVisual refHandVisual = (_gameController == OVRInput.Controller.LHand) ? _leftHandVisual : _rightHandVisual;
         if (!_usingHands || refHandVisual.ForceOffVisibility)
         {
+            _fistValue = 1; // Hand is not visible, make it a fist to hide the flashlight and keep holding the held ball
             return;
         }
         Vector3 bone1 = (refHand.Bones[20].Transform.position - refHand.Bones[8].Transform.position).normalized;
@@ -1423,18 +1474,16 @@ public class WorldBeyondManager : MonoBehaviour
     /// </summary>
     public Transform GetControllingHand(int boneID)
     {
-        bool usingLeft = WorldBeyondManager.Instance._gameController == OVRInput.Controller.LTouch || WorldBeyondManager.Instance._gameController == OVRInput.Controller.LHand;
+        bool usingLeft = _gameController == OVRInput.Controller.LTouch || _gameController == OVRInput.Controller.LHand;
         Transform hand = usingLeft ? _leftHandAnchor : _rightHandAnchor;
-        if (WorldBeyondManager.Instance._usingHands)
+        if (_usingHands)
         {
-            OVRSkeleton refLeft = WorldBeyondManager.Instance._leftHand;
-            OVRSkeleton refRight = WorldBeyondManager.Instance._rightHand;
-            if (refRight && refLeft)
+            if (_rightHand && _leftHand)
             {
                 // thumb tips, so menu is within view
-                if (boneID >= 0 && boneID < refLeft.Bones.Count)
+                if (boneID >= 0 && boneID < _leftHand.Bones.Count)
                 {
-                    hand = usingLeft ? refLeft.Bones[boneID].Transform : refRight.Bones[boneID].Transform;
+                    hand = usingLeft ? _leftHand.Bones[boneID].Transform : _rightHand.Bones[boneID].Transform;
                 }
             }
         }

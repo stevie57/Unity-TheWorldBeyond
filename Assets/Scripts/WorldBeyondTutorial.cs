@@ -26,7 +26,7 @@ using TMPro;
 public class WorldBeyondTutorial : MonoBehaviour
 {
     static public WorldBeyondTutorial Instance = null;
-    public Transform _canvasObject;
+    public Canvas _canvasObject;
     public Image _labelBackground;
     public TextMeshProUGUI _tutorialText;
     // used for full-screen passthrough, only when player walks out of the room
@@ -147,6 +147,18 @@ public class WorldBeyondTutorial : MonoBehaviour
         _currentMessage = message;
     }
 
+    public void ForceInvisible()
+    {
+        // Don't hide the popup if it's attached to your view
+        if (_attachToView) return;
+        _canvasObject.enabled = false;
+    }
+
+    public void ForceVisible()
+    {
+        _canvasObject.enabled = true;
+    }
+
     public void HideMessage(TutorialMessage message)
     {
         if (_currentMessage == message)
@@ -162,6 +174,7 @@ public class WorldBeyondTutorial : MonoBehaviour
         if (doAttach)
         {
             UpdatePosition(false);
+            ForceVisible();
         }
 
         // for now, attaching to the view is a special case and only used when there is no Scene detected

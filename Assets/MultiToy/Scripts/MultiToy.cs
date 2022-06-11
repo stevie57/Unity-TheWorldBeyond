@@ -635,6 +635,10 @@ public class MultiToy : MonoBehaviour
     /// </summary>
     public void GrabBall(BallCollectable bc)
     {
+        if (_grabbedBall)
+        {
+            return;
+        }
         bc.AbsorbBall();
         bc.SetState(BallCollectable.BallStatus.Grabbed);
         _grabbedBall = bc;
@@ -675,7 +679,7 @@ public class MultiToy : MonoBehaviour
     {
         if (WorldBeyondManager.Instance._currentChapter >= WorldBeyondManager.GameChapter.SearchForOppy)
         {
-            if (_toys[_toyIndex] == null)
+            if (_toyIndex < 0 || _toyIndex >= _toys.Length || _toys[_toyIndex] == null)
             {
                 return;
             }

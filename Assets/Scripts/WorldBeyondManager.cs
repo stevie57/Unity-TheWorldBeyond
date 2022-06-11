@@ -74,7 +74,7 @@ public class WorldBeyondManager : MonoBehaviour
     // How many balls the player currently has
     [HideInInspector]
     public int _ballCount = 0;
-    const int _startingBallCount = 4;
+    const int _startingBallCount = 0;
     // How many balls Oppy should eat before heading to the UFO
     // only starts incrementing during TheGreatBeyond chapter
     public int _oppyTargetBallCount { private set; get; } = 2;

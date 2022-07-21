@@ -30,18 +30,6 @@ public class BuildFlavors
     SceneRoot + "TheWorldBeyond.unity"
   };
 
-    [MenuItem("TheWorldBeyond/Build Android64", priority = 100)]
-    static void MenuBuildAndroid64()
-    {
-        BuildAndroid64();
-    }
-
-    [MenuItem("TheWorldBeyond/Build Android32", priority = 100)]
-    static void MenuBuildAndroid32()
-    {
-        BuildAndroid32();
-    }
-
     public static void BuildWin()
     {
         var buildPath = Path.Combine(Path.GetFullPath("."), buildFolderName);

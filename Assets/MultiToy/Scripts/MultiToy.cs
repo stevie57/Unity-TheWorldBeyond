@@ -26,10 +26,8 @@ public class MultiToy : MonoBehaviour
 
     [Header("Toys")]
     public WorldBeyondToy[] _toys;
-    int _toyIndex = 0;
-    const int _flashlightToyID = 0;
-    const int _ballShooterToyID = 1;
-    const int _wallToyID = 2;
+    int _toyIndexController = (int) ToyOption.None;
+    int _toyIndexHand = (int) ToyOption.None;
     bool _canSwitchToys = false;
     VirtualFlashlight _toyFlashlight;
     float _flickerFlashlightStrength = 1.0f;
@@ -75,10 +73,10 @@ public class MultiToy : MonoBehaviour
 
     public enum ToyOption
     {
-        Flashlight,
-        BallGun,
-        WallToy,
-        None
+        None = -1,
+        Flashlight = 0,
+        BallGun = 1,
+        WallToy = 2,
     };
 
     // only used by hands
@@ -99,9 +97,9 @@ public class MultiToy : MonoBehaviour
     {
         if (WorldBeyondManager.Instance._currentChapter >= WorldBeyondManager.GameChapter.SearchForOppy)
         {
-            if (_toyIndex == _wallToyID)
+            if (_toyIndexHand == (int) ToyOption.WallToy)
             {
-                _toys[_toyIndex].ActionUp();
+                _toys[_toyIndexHand].ActionUp();
             }
         }
     }
@@ -144,25 +142,25 @@ public class MultiToy : MonoBehaviour
 
         if (!TriggerHeld() && _canSwitchToys)
         {
-            int lastToy = _toyIndex;
-            int highestToyID = _wallToyID;
+            int lastToy = _toyIndexController;
+            int highestToyID = (int) ToyOption.WallToy;
             if (CycleToy(false))
             {
-                _toyIndex = _toyIndex - 1 < 0 ? highestToyID : _toyIndex - 1;
+                _toyIndexController = _toyIndexController - 1 < 0 ? highestToyID : _toyIndexController - 1;
             }
             if (CycleToy(true))
             {
-                _toyIndex = _toyIndex + 1 > highestToyID ? 0 : _toyIndex + 1;
+                _toyIndexController = _toyIndexController + 1 > highestToyID ? 0 : _toyIndexController + 1;
             }
-            if (lastToy != _toyIndex)
+            if (lastToy != _toyIndexController)
             {
                 _toys[lastToy].Deactivate();
-                _toys[_toyIndex].Activate();
+                _toys[_toyIndexController].Activate();
 
                 _switchToy_1.Play();
                 WorldBeyondTutorial.Instance.HideMessage(WorldBeyondTutorial.TutorialMessage.SwitchToy);
 
-                SetToyMesh((ToyOption)_toyIndex);
+                SetToyMesh((ToyOption)_toyIndexController);
             }
         }
 
@@ -181,74 +179,72 @@ public class MultiToy : MonoBehaviour
             }
         }
 
+        var currentToyIndex = _toyIndexController;
         // switch toys, using hands
         if (WorldBeyondManager.Instance._usingHands)
         {
             _ballTossCooldownFactor += Time.deltaTime;
-
+            currentToyIndex = _toyIndexHand;
             if (currentChapter >= WorldBeyondManager.GameChapter.SearchForOppy)
             {
                 Transform mainCam = WorldBeyondManager.Instance._mainCamera.transform;
                 bool handOutOfView = Vector3.Dot(mainCam.forward, (controllerPos - mainCam.position).normalized) < 0.5f;
-                int lastToy = _toyIndex;
+                int lastToy = _toyIndexHand;
 
                 // palm out: flashlight
                 float palmOut = Vector3.Dot(mainCam.forward, controllerRot * Vector3.forward);
                 float fistStrength = Mathf.Clamp01((WorldBeyondManager.Instance._fistValue - 0.3f)*5.0f);
                 float flashL = Mathf.Clamp01(palmOut * 10) * (1-fistStrength) * (_grabbedBall ? 0 : 1);
 
-                _toyIndex = (flashL > 0.5f && _flashLightUnlocked)? _flashlightToyID : _toyIndex;
+                currentToyIndex = (flashL > 0.5f && _flashLightUnlocked)? (int)ToyOption.Flashlight : currentToyIndex;
                 _toyFlashlight.SetLightStrength(flashL * _flickerFlashlightStrength * Mathf.Clamp01(_ballTossCooldownFactor-1));
 
                 // palm up: prepare room framer
                 float palmUp = Vector3.Dot(mainCam.right, controllerRot * Vector3.right);
-                _toyIndex = (palmUp < 0.0f && _wallToyUnlocked && !_grabbedBall) ? _wallToyID : _toyIndex;
+                currentToyIndex = (palmUp < 0.0f && _wallToyUnlocked && !_grabbedBall) ? (int)ToyOption.WallToy : currentToyIndex;
 
-                if (handOutOfView || WorldBeyondManager.Instance._pet.IsGameOver())
+                if (lastToy != currentToyIndex)
                 {
-                    _toyIndex = -1;
-                }
-
-                if (lastToy != _toyIndex)
-                {
-                    if (lastToy >= 0)
+                    if (lastToy > (int) ToyOption.None)
                     {
                         _toys[lastToy].Deactivate();
                     }
-                    if (_toyIndex >= 0)
+                    if (currentToyIndex > (int) ToyOption.None)
                     {
-                        if (_toyIndex == _flashlightToyID)
+                        if (currentToyIndex == (int)ToyOption.Flashlight)
                         {
                             WorldBeyondTutorial.Instance.HideMessage(WorldBeyondTutorial.TutorialMessage.EnableFlashlight);
                         }
-                        _toys[_toyIndex].Activate();
+                        _toys[currentToyIndex].Activate();
                     }
                 }
+
+                _toyIndexHand = currentToyIndex;
             }
         }
 
         if (currentChapter >= WorldBeyondManager.GameChapter.SearchForOppy)
         {
-            if (_toyIndex >= 0)
+            if (currentToyIndex > (int) ToyOption.None)
             {
                 if (TriggerPressed())
                 {
-                    if (_toyIndex == _ballShooterToyID && WorldBeyondManager.Instance._ballCount > 0)
+                    if (currentToyIndex == (int)ToyOption.BallGun && WorldBeyondManager.Instance._ballCount > 0)
                     {
                         _animator.SetTrigger("Shoot");
                     }
 
-                    _toys[_toyIndex].ActionDown();
+                    _toys[currentToyIndex].ActionDown();
                 }
 
                 if (TriggerReleased())
                 {
-                    _toys[_toyIndex].ActionUp();
+                    _toys[currentToyIndex].ActionUp();
                 }
 
                 if (TriggerHeld())
                 {
-                    _toys[_toyIndex].Action();
+                    _toys[currentToyIndex].Action();
                 }
             }
 
@@ -294,16 +290,16 @@ public class MultiToy : MonoBehaviour
     {
         if (activate)
         {
-            _toys[_flashlightToyID].Activate();
+            _toys[(int)ToyOption.Flashlight].Activate();
             _flashLightUnlocked = true;
             if (!WorldBeyondManager.Instance._usingHands)
             {
-                _toyIndex = _flashlightToyID;
+                _toyIndexController = (int) ToyOption.Flashlight;
             }
         }
         else
         {
-            _toys[_flashlightToyID].Deactivate();
+            _toys[(int) ToyOption.Flashlight].Deactivate();
         }
         _toyFlashlight.SetLightStrength(1.0f);
     }
@@ -377,7 +373,8 @@ public class MultiToy : MonoBehaviour
                 DeactivateAllToys();
                 ShowToy(false);
                 ShowPassthroughGlove(false);
-                _toyIndex = -1;
+                _toyIndexController = (int) ToyOption.None;
+                _toyIndexHand = (int) ToyOption.None;
                 _canSwitchToys = false;
                 _throwBallTaught = false;
                 _wallToyUnlocked = false;
@@ -398,8 +395,9 @@ public class MultiToy : MonoBehaviour
             case WorldBeyondManager.GameChapter.OppyExploresReality:
                 DeactivateAllToys();
                 ShowToy(true);
+                _toyIndexController = (int) ToyOption.None;
+                _toyIndexHand = (int) ToyOption.None;
                 _canSwitchToys = false;
-                _toyIndex = -1;
                 _wallToyUnlocked = false;
                 break;
             case WorldBeyondManager.GameChapter.TheGreatBeyond:
@@ -423,11 +421,17 @@ public class MultiToy : MonoBehaviour
     {
         if (!WorldBeyondManager.Instance._usingHands)
         {
+            //Ballcount can be 0 when using hands, and you are not able to change to pickup balls at this point when using controllers.
+            if (WorldBeyondManager.Instance._ballCount == 0)
+            {
+                // Give two free balls so that you don't get stuck
+                WorldBeyondManager.Instance._ballCount = 2;
+            }
             _unlockToy_1.Play();
             WorldBeyondTutorial.Instance.DisplayMessage(WorldBeyondTutorial.TutorialMessage.ShootBall);
-            _toys[_flashlightToyID].Deactivate();
-            _toys[_ballShooterToyID].Activate();
-            _toyIndex = _ballShooterToyID;
+            _toys[(int) ToyOption.Flashlight].Deactivate();
+            _toys[(int) ToyOption.BallGun].Activate();
+            _toyIndexController = (int) ToyOption.BallGun;
             SetToyMesh(ToyOption.BallGun);
         }
         _flashlightLoop_1.Stop();
@@ -445,9 +449,9 @@ public class MultiToy : MonoBehaviour
         if (!WorldBeyondManager.Instance._usingHands)
         {
             WorldBeyondTutorial.Instance.DisplayMessage(WorldBeyondTutorial.TutorialMessage.ShootWall);
-            _toys[_ballShooterToyID].Deactivate();
-            _toys[_wallToyID].Activate();
-            _toyIndex = _wallToyID;
+            _toys[(int) ToyOption.BallGun].Deactivate();
+            _toys[(int) ToyOption.WallToy].Activate();
+            _toyIndexController = (int) ToyOption.WallToy;
             SetToyMesh(ToyOption.WallToy);
         }
         else
@@ -524,7 +528,7 @@ public class MultiToy : MonoBehaviour
     /// </summary>
     public bool IsFlashlightActive()
     {
-        return (_toyIndex == _flashlightToyID);
+        return (_toyIndexController == (int)ToyOption.Flashlight || _toyIndexHand == (int)ToyOption.Flashlight);
     }
 
     /// <summary>
@@ -621,6 +625,8 @@ public class MultiToy : MonoBehaviour
         if (usingHands)
         {
             _toyFlashlight._flashlight.transform.SetParent(this.transform);
+            _toyFlashlight._flashlight.transform.localPosition = Vector3.zero;
+            _toyFlashlight._flashlight.transform.localRotation = Quaternion.identity;
         }
         else
         {
@@ -679,20 +685,51 @@ public class MultiToy : MonoBehaviour
     {
         if (WorldBeyondManager.Instance._currentChapter >= WorldBeyondManager.GameChapter.SearchForOppy)
         {
-            if (_toyIndex < 0 || _toyIndex >= _toys.Length || _toys[_toyIndex] == null)
+            if (_toyIndexController < 0 || _toyIndexController >= _toys.Length || _toys[_toyIndexController] == null)
             {
                 return;
             }
             ShowToy(pause);
             if (pause)
             {
-                _toys[_toyIndex].Activate();
+                _toys[_toyIndexController].Activate();
             }
             else
             {
 
-                _toys[_toyIndex].Deactivate();
+                _toys[_toyIndexController].Deactivate();
             }
+        }
+    }
+
+    public void UseHands(bool usingHands, bool rightHand = false)
+    {
+        if (usingHands)
+        {
+            SetToyMesh(ToyOption.None);
+            ShowPassthroughGlove(false);
+        }
+        else
+        {
+            SetToyMesh((ToyOption) _toyIndexController);
+            if (_toyVisible)
+            {
+                ShowPassthroughGlove(true, rightHand);
+            }
+        }
+        _toyFlashlight.SetLightStrength(usingHands ? 0.0f : 1.0f);
+        ChildLightCone(usingHands);
+    }
+
+    public ToyOption GetCurrentToy()
+    {
+        if (WorldBeyondManager.Instance._usingHands)
+        {
+            return (ToyOption) _toyIndexHand;
+        }
+        else
+        {
+            return (ToyOption) _toyIndexController;
         }
     }
 }

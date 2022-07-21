@@ -232,13 +232,38 @@ public class WorldBeyondManager : MonoBehaviour
             }
         }
 
-        if (_currentChapter <= GameChapter.OppyBaitsYou && _currentChapter > GameChapter.Title)
+        var usingHands = (
+                OVRInput.GetActiveController() == OVRInput.Controller.Hands ||
+                OVRInput.GetActiveController() == OVRInput.Controller.LHand ||
+                OVRInput.GetActiveController() == OVRInput.Controller.RHand ||
+                OVRInput.GetActiveController() == OVRInput.Controller.None);
+        if (usingHands != _usingHands)
         {
-            _usingHands = (
-                        OVRInput.GetActiveController() == OVRInput.Controller.Hands ||
-                        OVRInput.GetActiveController() == OVRInput.Controller.LHand ||
-                        OVRInput.GetActiveController() == OVRInput.Controller.RHand ||
-                        OVRInput.GetActiveController() == OVRInput.Controller.None);
+            _usingHands = usingHands;
+            if (usingHands)
+            {
+                if (_gameController == OVRInput.Controller.LTouch)
+                {
+                    _gameController = OVRInput.Controller.LHand;
+                }
+                if (_gameController == OVRInput.Controller.RTouch)
+                {
+                    _gameController = OVRInput.Controller.RHand;
+                }
+            }
+            else
+            {
+                if (_gameController == OVRInput.Controller.RHand)
+                {
+                    _gameController = OVRInput.Controller.RTouch;
+                }
+                if (_gameController == OVRInput.Controller.LHand)
+                {
+                    _gameController = OVRInput.Controller.LTouch;
+                }
+            }
+            HideInvisibleHandAccessories();
+            MultiToy.Instance.UseHands(_usingHands, OVRInput.GetActiveController() == OVRInput.Controller.RTouch);
         }
 
         // constantly check if the player is within the polygonal floorplan of the room
@@ -375,6 +400,12 @@ public class WorldBeyondManager : MonoBehaviour
         // Hidden hands have a position of 0, only update if the hand is visible.
         if (!leftHandHidden) _leftHandGrabbedBallLastDistance = grabbedBall ? Vector3.Distance(_leftHandAnchor.position, grabbedBall.transform.position): Mathf.Infinity;
         if (!rightHandHidden) _rightHandGrabbedBallLastDistance = grabbedBall ? Vector3.Distance(_rightHandAnchor.position, grabbedBall.transform.position): Mathf.Infinity;
+
+        if (!_usingHands)
+        {
+            _interactionLineLeft.enabled = false;
+            _interactionLineRight.enabled = false;
+        }
     }
 
     /// <summary>
@@ -386,13 +417,13 @@ public class WorldBeyondManager : MonoBehaviour
         bool holdingBall = grabbedBall != null && previousHandToBallDistance < 0.2f;
         if (handHidden)
         {
-            interactionLine.enabled = false;
+            interactionLine.gameObject.SetActive(false);
             if (primary) WorldBeyondTutorial.Instance.ForceInvisible();
             if (holdingBall) grabbedBall.ForceInvisible();
         }
         else
         {
-            interactionLine.enabled = true;
+            interactionLine.gameObject.SetActive(_usingHands && MultiToy.Instance.GetCurrentToy() == MultiToy.ToyOption.Flashlight);
             if (primary) WorldBeyondTutorial.Instance.ForceVisible();
             if (holdingBall) grabbedBall.ForceVisible();
         }
@@ -454,8 +485,8 @@ public class WorldBeyondManager : MonoBehaviour
                 _passthroughStylist.ResetPassthrough(0.1f);
                 VirtualRoom.Instance.ShowAllWalls(true);
                 VirtualRoom.Instance.SetRoomSaturation(1.0f);
-                StartCoroutine(UnlockBallShooter(5.0f));
-                StartCoroutine(UnlockWallToy(20.0f));
+                StartCoroutine(UnlockBallShooter(_usingHands ? 0f : 5.0f));
+                StartCoroutine(UnlockWallToy(_usingHands ? 5f : 20.0f));
                 _spaceShipAnimator.StartIdleSound(); // Start idle sound here - mix will mute it.
                 break;
             case GameChapter.TheGreatBeyond:
@@ -614,13 +645,10 @@ public class WorldBeyondManager : MonoBehaviour
         // ensures the flashlight works again, once it's switched back to
         MultiToy.Instance.SetFlickerTime(0.0f);
 
-        if (!_usingHands)
-        {
-            MultiToy.Instance.UnlockBallShooter();
-            OVRInput.SetControllerVibration(1, 1, _gameController);
-            yield return new WaitForSeconds(1.0f);
-            KillControllerVibration();
-        }
+        MultiToy.Instance.UnlockBallShooter();
+        OVRInput.SetControllerVibration(1, 1, _gameController);
+        yield return new WaitForSeconds(1.0f);
+        KillControllerVibration();
     }
 
     /// <summary>
@@ -731,7 +759,10 @@ public class WorldBeyondManager : MonoBehaviour
     /// </summary>
     public void DiscoveredBall(BallCollectable collected)
     {
-        _ballCount++;
+        if (!_usingHands) // Balls are not absorbed, just picked up when using hands
+        {
+            _ballCount++;
+        }
         WorldBeyondTutorial.Instance.HideMessage(WorldBeyondTutorial.TutorialMessage.BallSearch);
         WorldBeyondTutorial.Instance.HideMessage(WorldBeyondTutorial.TutorialMessage.NoBalls);
 
@@ -750,7 +781,6 @@ public class WorldBeyondManager : MonoBehaviour
                 StopAllCoroutines();
             }
             StartCoroutine(SpawnPetRandomly(false, Random.Range(_spawnTimeMin, _spawnTimeMax)));
-            return;
         }
     }
 

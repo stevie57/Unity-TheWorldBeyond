@@ -199,7 +199,7 @@ public class WorldBeyondTutorial : MonoBehaviour
         transform.position = Vector3.Lerp(transform.position, targetPosition, smoothing);
 
         Vector3 lookDir = transform.position - centerEye.position;
-        if (lookDir.magnitude > Mathf.Epsilon)
+        if (lookDir.magnitude > Mathf.Epsilon && lookDir != Vector3.zero)
         {
             Quaternion targetRotation = Quaternion.LookRotation(lookDir);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, smoothing);

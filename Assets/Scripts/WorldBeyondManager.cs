@@ -1154,34 +1154,36 @@ public class WorldBeyondManager : MonoBehaviour
     /// </summary>
     public Vector3 GetRandomToyPosition()
     {
-        // default position is where camera is.  Shouldn't happen, but it's a fallback
+        // define guardian bounds or set bounds to 0 if guardian is disabled
+        var bounds = new Bounds(Vector3.zero, OVRManager.boundary?.GetConfigured() ?? false ? OVRManager.boundary.GetDimensions(OVRBoundary.BoundaryType.PlayArea) : Vector3.zero);
+        // default position is where camera is. Shouldn't happen, but it's a fallback
         Vector3 finalPos = new Vector3(_mainCamera.transform.position.x, GetFloorHeight(), _mainCamera.transform.position.z);
 
         // shoot rays out from player, a few cm above ground
         Vector3 curbHeight = finalPos + Vector3.up * 0.1f;
-        Vector3 startingVec = new Vector3(_mainCamera.transform.right.x, GetFloorHeight(), _mainCamera.transform.right.z).normalized;
+        Vector3 direction = _mainCamera.transform.right;
 
         // select the farthest candidate position
         float farthestPosition = 0.0f;
         int sliceCount = 4;
         for (int i = 0; i <= sliceCount; i++)
         {
-            float closestHit = 1000.0f;
-            Vector3 closestPos = finalPos;
             LayerMask ballSpawnLayer = LayerMask.GetMask("RoomBox", "Furniture");
-            RaycastHit[] roomboxHit = Physics.RaycastAll(curbHeight, startingVec, 100, ballSpawnLayer);
-            foreach (RaycastHit hit in roomboxHit)
+            RaycastHit hit;
+            Ray ray = new Ray(curbHeight, direction);
+            Vector3 candidatePos = finalPos;
+
+            if (Physics.Raycast(ray, out hit, 100, ballSpawnLayer))
             {
-                // need to find the closest impact, because hit order isn't guaranteed
-                float thisHit = Vector3.Distance(curbHeight, hit.point);
-                if (thisHit < closestHit)
+                // get a halfway point, so beam isn't always flush against a wall
+                var posMiddle = (curbHeight + hit.point) * 0.5f;
+                // prevent from spawning outside the walls and guardian
+                if (_vrRoom.IsPositionInRoom(posMiddle, 0f) && (bounds.size.Equals(Vector3.zero) || bounds.Contains(posMiddle)))
                 {
-                    closestHit = thisHit;
-                    closestPos = (hit.point + hit.normal * 0.3f);
+                    candidatePos = posMiddle;
                 }
             }
-            // get a halfway point, so beam isn't always flush against a wall
-            Vector3 candidatePos = (curbHeight + closestPos) * 0.5f;
+
             float distanceToCandidate = Vector3.Distance(curbHeight, candidatePos);
             if (distanceToCandidate > farthestPosition)
             {
@@ -1189,10 +1191,45 @@ public class WorldBeyondManager : MonoBehaviour
                 finalPos = candidatePos;
             }
 
-            startingVec = Quaternion.Euler(0, -180.0f / sliceCount, 0) * startingVec;
+            direction = Quaternion.Euler(0, -180.0f / sliceCount, 0) * direction;
         }
 
-        return new Vector3(finalPos.x, 1.0f + GetFloorHeight(), finalPos.z); ;
+        return MovePointAwayFromWalls(new Vector3(finalPos.x, 1.0f + GetFloorHeight(), finalPos.z), bounds);
+    }
+
+    /// <summary>
+    /// Raycasts every 45 degrees from point towards walls, move the point away from the wall if it's too close
+    /// </summary>
+    private Vector3 MovePointAwayFromWalls(Vector3 pos, Bounds bounds)
+    {
+        var point = pos;
+        var direction = Vector3.right;
+        RaycastHit hit;
+        LayerMask ballSpawnLayer = LayerMask.GetMask("RoomBox", "Furniture");
+        var attempt = 0;
+        for (int i = 0; i < 8; i++)
+        {
+            if (Physics.Raycast(point, direction, out hit, 0.5f, ballSpawnLayer))
+            {
+                var safePos = point - direction * 0.5f;
+                if (_vrRoom.IsPositionInRoom(safePos, 0f) && (bounds.size.Equals(Vector3.zero) || bounds.Contains(safePos)))
+                {
+                    point = safePos;
+                }
+                // reset count so new position gets checked too
+                i = 0;
+                attempt++;
+            }
+            direction = Quaternion.Euler(0, 45, 0) * direction;
+
+            // prevent infinite loop if multitoy can't be placed safely
+            if (attempt > 25)
+            {
+                Debug.LogError("Failed to safely move point away from walls after " + attempt + " attempts");
+                return pos;
+            }
+        }
+        return point;
     }
 
     /// <summary>

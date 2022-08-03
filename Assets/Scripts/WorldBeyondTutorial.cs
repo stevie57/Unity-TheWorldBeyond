@@ -50,6 +50,7 @@ public class WorldBeyondTutorial : MonoBehaviour
         // Only Scene Error messages after this entry
         ERROR_USER_WALKED_OUTSIDE_OF_ROOM,    // runs every frame, to force on Passthrough. The only error that doesn't quit the app.
         ERROR_NO_SCENE_DATA,                  // by default, Room Setup is launched; if the user cancels, this message displays
+        ERROR_NO_SCENE_DATA_LINK,             // same as above, but on PC, Room Setup doesn't launch; so error message is slightly different
         ERROR_USER_STARTED_OUTSIDE_OF_ROOM,   // user is outside of the room volume, likely from starting in a different guardian/room
         ERROR_NOT_ENOUGH_WALLS,               // fewer than 3 walls, or only non-walls discovered (e.g. user has only set up a desk)
         ERROR_TOO_MANY_WALLS,                 // a closed loop of walls was found, but there are other rooms/walls
@@ -131,6 +132,9 @@ public class WorldBeyondTutorial : MonoBehaviour
                 break;
             case TutorialMessage.ERROR_NO_SCENE_DATA:
                 _tutorialText.text = "The World Beyond requires Scene data. Please run Room Setup in Settings > Guardian.";
+                break;
+            case TutorialMessage.ERROR_NO_SCENE_DATA_LINK:
+                _tutorialText.text = "The World Beyond requires Scene data. Please disable Link, then run Room Setup in Settings > Guardian. Then enable Link and try again.";
                 break;
             case TutorialMessage.ERROR_USER_STARTED_OUTSIDE_OF_ROOM:
                 _tutorialText.text = "It appears you're outside of your room. Please enter your room and restart.";

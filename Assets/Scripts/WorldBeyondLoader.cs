@@ -86,6 +86,13 @@ public class WorldBeyondLoader : OVRSceneModelLoader
         }
         else
         {
+            // if no Scene data is found when using Link, inform the user of solution:
+            // disable Link, run Room Setup on Quest, enable Link, play again
+            if (Application.isEditor)
+            {
+                WorldBeyondTutorial.Instance.DisplayMessage(WorldBeyondTutorial.TutorialMessage.ERROR_NO_SCENE_DATA_LINK);
+            }
+
             Debug.LogError($"[{nameof(WorldBeyondLoader)}]: {nameof(SceneManager.RequestSceneCapture)} returned false.");
         }
 

@@ -202,7 +202,7 @@ public class WorldBeyondManager : MonoBehaviour
         _pet.Initialize();
 
         _sceneManager.SceneModelLoadedSuccessfully += SceneModelLoaded;
-        if (Application.isEditor || _useDebugRoomBox)
+        if (_useDebugRoomBox)
         {
             _sceneModelLoaded = true;
         }
@@ -728,7 +728,7 @@ public class WorldBeyondManager : MonoBehaviour
             _frameWait++;
             return;
         }
-        if (Application.isEditor || _useDebugRoomBox)
+        if (_useDebugRoomBox)
         {
             // use a fake room box
             _vrRoom.Initialize();

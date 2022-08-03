@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -47,6 +48,16 @@ public class OVRSceneModelLoader : MonoBehaviour
     OnStart();
   }
 
+  private IEnumerator AttemptToLoadSceneModel()
+  {
+    do
+    {
+      OVRSceneManager.Development.LogWarning(nameof(OVRSceneModelLoader),
+        $"{nameof(OVRSceneManager.LoadSceneModel)} failed. Will try again next frame.");
+      yield return null;
+    } while (!SceneManager.LoadSceneModel());
+  }
+
   /// <summary>
   /// Invoked from this component's `Start` method. The default behavior is to load the scene model using
   /// <see cref="OVRSceneManager.LoadSceneModel"/>.
@@ -56,7 +67,13 @@ public class OVRSceneModelLoader : MonoBehaviour
     // Load the scene
     SceneManager.Verbose?.Log(nameof(OVRSceneModelLoader),
     $"{nameof(OnStart)}() calling {nameof(OVRSceneManager)}.{nameof(OVRSceneManager.LoadSceneModel)}()");
-    SceneManager.LoadSceneModel();
+
+    if (!SceneManager.LoadSceneModel())
+    {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || (UNITY_ANDROID && !UNITY_EDITOR)
+      StartCoroutine(AttemptToLoadSceneModel());
+#endif
+    }
   }
 
   /// <summary>
@@ -75,10 +92,19 @@ public class OVRSceneModelLoader : MonoBehaviour
   /// </summary>
   protected virtual void OnNoSceneModelToLoad()
   {
+#if UNITY_EDITOR_WIN
+    UnityEditor.EditorUtility.DisplayDialog("Scene Capture does not work over Link",
+      "There is no scene model available, and scene capture cannot be invoked over Link. " +
+      "Please capture a scene with the HMD in standalone mode, then access the scene model over Link. " +
+      "\n\n" +
+      "If a scene model has already been captured, make sure the HMD is connected via Link and that is is donned.",
+      "Ok");
+#else
     // There's no Scene model, we have to ask the user to create one
     SceneManager.Verbose?.Log(nameof(OVRSceneModelLoader),
     $"{nameof(OnNoSceneModelToLoad)}() calling {nameof(OVRSceneManager)}.{nameof(OVRSceneManager.RequestSceneCapture)}()");
     SceneManager.RequestSceneCapture();
+#endif
   }
 
   /// <summary>

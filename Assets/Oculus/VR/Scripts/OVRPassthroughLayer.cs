@@ -302,11 +302,13 @@ public class OVRPassthroughLayer : MonoBehaviour
 	}
 
 	/// <summary>
-	/// This method allows to set brightness, contast, and saturation adjustment for the passthrough images. TODO(T113451945)
+	/// This method allows to configure brightness and contrast adjustment for Passthrough images.
 	/// </summary>
-	/// <param name="brightness">TODO(T113451945).</param>
-	/// <param name="contrast">TODO(T113451945).</param>
-	/// <param name="saturation">TODO(T113451945).</param>
+	/// <param name="brightness">Modify the brightness of Passthrough. Valid range: [-1, 1]. A
+	///   value of 0 means that brightness is left unchanged.</param>
+	/// <param name="contrast">Modify the contrast of Passthrough. Valid range: [-1, 1]. A value of 0
+  ///   means that contrast is left unchanged.</param>
+	/// <param name="saturation">Ignored, reserved for future use.</param>
 	public void SetBrightnessContrastSaturation(float brightness = 0.0f, float contrast = 0.0f, float saturation = 0.0f)
 	{
 		colorMapType = ColorMapType.BrightnessContrastSaturation;

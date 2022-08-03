@@ -94,7 +94,7 @@ public class OVRRuntimeController : MonoBehaviour
 			if (modelPaths[i].Equals(modelPath))
 				return true;
 		}
-		Debug.LogError("Render model path not supported by this device.");
+		Debug.LogError("Render model path " + modelPath + " not supported by this device.");
 		return false;
 	}
 	private bool LoadControllerModel(string modelPath)
@@ -123,9 +123,9 @@ public class OVRRuntimeController : MonoBehaviour
 					}
 				}
 			}
-			Debug.LogError("Retrived a null model key.");
+			Debug.LogError("Retrived a null model key of " + modelPath);
 		}
-		Debug.LogError("Failed to load controller model");
+		Debug.LogError("Failed to load controller model of " + modelPath);
 		return false;
 	}
 

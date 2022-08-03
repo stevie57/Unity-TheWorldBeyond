@@ -19,10 +19,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 /// <summary>
 /// Represents a "space" in the Oculus Runtime.
@@ -34,6 +30,20 @@ public readonly struct OVRSpace : IEquatable<OVRSpace>
 	/// or apps.
 	/// </summary>
 	public ulong Handle { get; }
+
+	/// <summary>
+	/// Retrieve the universally unique identifier (UUID) associated with this <see cref="OVRSpace"/>.
+	/// </summary>
+	/// <remarks>
+	/// Every space that can be persisted will have a UUID associated with it. UUIDs are consistent across different
+	/// sessions and apps.
+	///
+	/// The UUID of a space does not change over time, but not all spaces are guaranteed to have a UUID.
+	/// </remarks>
+	/// <param name="uuid">If successful, the uuid associated with this <see cref="OVRSpace"/>, otherwise, `Guid.Empty`.
+	/// </param>
+	/// <returns>Returns `true` if the uuid could be retrieved, otherwise `false`.</returns>
+	public bool TryGetUuid(out Guid uuid) => OVRPlugin.GetSpaceUuid(Handle, out uuid);
 
 	/// <summary>
 	/// Indicates whether this <see cref="OVRSpace"/> represents a valid space (vs a default constructed

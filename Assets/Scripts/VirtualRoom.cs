@@ -21,6 +21,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
 using Random = UnityEngine.Random;
@@ -56,6 +57,7 @@ public class VirtualRoom : MonoBehaviour
     MeshRenderer _sceneMesh = null;
     float _effectRadius = 10.0f;
     public AnimationCurve _edgeIntensity;
+    OVRSceneAnchor _floorSceneAnchor = null;
 
     private void Awake()
     {
@@ -256,8 +258,8 @@ public class VirtualRoom : MonoBehaviour
             SetChildrenScale(floorObj.transform, floorScale);
             floorObj.GetComponent<WorldBeyondRoomObject>()._dimensions = floorScale;
             floorObj.GetComponent<WorldBeyondRoomObject>()._isWall = false;
-            OVRSceneAnchor floorSO = floorObj.GetComponent<OVRSceneAnchor>();
-            tempSceneAnchors.Add(floorSO);
+            _floorSceneAnchor = floorObj.GetComponent<OVRSceneAnchor>();
+            tempSceneAnchors.Add(_floorSceneAnchor);
 
             GameObject ceilingObj = Instantiate(_anchorPrefab);
             ceilingObj.transform.position = floorCenter + Vector3.up * height;
@@ -306,6 +308,7 @@ public class VirtualRoom : MonoBehaviour
                 if (i == sceneAnchors.Length-2)
                 {
                     _roomFloorID = _roomboxWalls.Count;
+                    _floorSceneAnchor = sceneAnchors[i];
 
                     // move the world slightly below the ground floor, so the virtual floor doesn't Z-fight
                     WorldBeyondManager.Instance.MoveGroundFloor(instance.transform.position.y - _groundDelta);
@@ -534,25 +537,33 @@ public class VirtualRoom : MonoBehaviour
     /// </summary>
     List<Vector3> GetClockwiseFloorOutline(WorldBeyondRoomObject[] allFurniture)
     {
-        List<WorldBeyondRoomObject> justWalls = new List<WorldBeyondRoomObject>();
-        for (int i = 0; i < allFurniture.Length; i++)
-        {
-            if (allFurniture[i]._isWall)
-            {
-                justWalls.Add(allFurniture[i]);
-            }
-        }
         List<Vector3> cornerPoints = new List<Vector3>();
-        int seedWall = 0;
-        for (int i = 0; i < justWalls.Count; i++)
-        {
-            cornerPoints.Add(GetNextSplinePoint(ref seedWall, justWalls));
-        }
 
-        // Somehow, the number of walls in the floor outline is less than total walls. Data likely corrupt; prompt user to redo room.
-        if (cornerPoints.Count < justWalls.Count)
-        {
-            WorldBeyondTutorial.Instance.DisplayMessage(WorldBeyondTutorial.TutorialMessage.ERROR_TOO_MANY_WALLS);
+        if (null == _floorSceneAnchor || !OVRPlugin.GetSpaceBoundary2D(_floorSceneAnchor.Space, out Vector2[] boundary)){
+            // fall back to wall corner method
+            List<WorldBeyondRoomObject> justWalls = new List<WorldBeyondRoomObject>();
+            for (int i = 0; i < allFurniture.Length; i++)
+            {
+                if (allFurniture[i]._isWall)
+                {
+                    justWalls.Add(allFurniture[i]);
+                }
+            }
+            int seedWall = 0;
+            for (int i = 0; i < justWalls.Count; i++)
+            {
+                cornerPoints.Add(GetNextSplinePoint(ref seedWall, justWalls));
+            }
+
+            // Somehow, the number of walls in the floor outline is less than total walls. Data likely corrupt; prompt user to redo room.
+            if (cornerPoints.Count < justWalls.Count)
+            {
+                WorldBeyondTutorial.Instance.DisplayMessage(WorldBeyondTutorial.TutorialMessage.ERROR_TOO_MANY_WALLS);
+            }
+        } else {
+            // Use the Scence API and floor scene anchor to get the cornor of the floor, and convert Vector2 to Vector3
+            cornerPoints = boundary.ToList()
+                .ConvertAll<Vector3>(corner => new Vector3(corner.x, 0.0f, corner.y));
         }
 
         return cornerPoints;

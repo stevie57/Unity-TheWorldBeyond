@@ -351,6 +351,7 @@ public class VirtualRoom : MonoBehaviour
                     // move the world slightly below the ground floor, so the virtual floor doesn't Z-fight
                     WorldBeyondManager.Instance.MoveGroundFloor(instance.transform.position.y - _groundDelta);
                     _floorHeight = instance.transform.position.y;
+                    _floorSceneAnchor = instance;
                 }
                 else if (classification.Contains(OVRSceneManager.Classification.Ceiling))
                 {
@@ -563,7 +564,14 @@ public class VirtualRoom : MonoBehaviour
         } else {
             // Use the Scence API and floor scene anchor to get the cornor of the floor, and convert Vector2 to Vector3
             cornerPoints = boundary.ToList()
-                .ConvertAll<Vector3>(corner => new Vector3(corner.x, 0.0f, corner.y));
+                .ConvertAll<Vector3>(corner => new Vector3(-corner.x, corner.y, 0.0f));
+
+            // GetSpaceBoundary2D is in anchor-space
+            cornerPoints.Reverse();
+            for (int i = 0; i < cornerPoints.Count; i++)
+            {
+                cornerPoints[i] = _floorSceneAnchor.transform.TransformPoint(cornerPoints[i]);
+            }
         }
 
         return cornerPoints;

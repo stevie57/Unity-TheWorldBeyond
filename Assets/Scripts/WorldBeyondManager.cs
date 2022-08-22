@@ -41,10 +41,6 @@ public class WorldBeyondManager : MonoBehaviour
     // e.g. VolumeAndPlaneSwitcher needs to happen first, and script execution order also isn't fixed by default
     int _frameWait = 0;
 
-    // use a fake roombox that ignores Scene
-    // see the children on the VirtualRoom prefab to adjust the corner points of the room
-    bool _useDebugRoomBox = false;
-
     [HideInInspector]
     public OVRSceneAnchor[] _sceneAnchors;
 
@@ -202,10 +198,6 @@ public class WorldBeyondManager : MonoBehaviour
         _pet.Initialize();
 
         _sceneManager.SceneModelLoadedSuccessfully += SceneModelLoaded;
-        if (_useDebugRoomBox)
-        {
-            _sceneModelLoaded = true;
-        }
     }
 
     public void Update()
@@ -728,21 +720,14 @@ public class WorldBeyondManager : MonoBehaviour
             _frameWait++;
             return;
         }
-        if (_useDebugRoomBox)
-        {
-            // use a fake room box
-            _vrRoom.Initialize();
-        }
-        else
-        {
-            // OVRSceneAnchors have already been instantiated from OVRSceneManager
-            // to avoid script execution conflicts, we do this once in the Update loop instead of directly when the SceneModelLoaded event is fired
-            _sceneAnchors = FindObjectsOfType<OVRSceneAnchor>();
 
-            // WARNING: right now, a Scene is guaranteed to have closed walls
-            // if this ever changes, this logic needs to be revisited because the whole game fails (e.g. furniture with no walls)
-            _vrRoom.Initialize(_sceneAnchors);
-        }
+        // OVRSceneAnchors have already been instantiated from OVRSceneManager
+        // to avoid script execution conflicts, we do this once in the Update loop instead of directly when the SceneModelLoaded event is fired
+        _sceneAnchors = FindObjectsOfType<OVRSceneAnchor>();
+
+        // WARNING: right now, a Scene is guaranteed to have closed walls
+        // if this ever changes, this logic needs to be revisited because the whole game fails (e.g. furniture with no walls)
+        _vrRoom.Initialize(_sceneAnchors);
 
         // even though loading has succeeded to this point, do some sanity checks
         if (!_vrRoom.IsPlayerInRoom())

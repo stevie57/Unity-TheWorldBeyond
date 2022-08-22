@@ -209,71 +209,6 @@ public class VirtualRoom : MonoBehaviour
         AudioManager.SetRoomOpenness(VirtualRoom.Instance.GetRoomOpenAmount());
     }
 
-    /// <summary>
-    /// DEBUG/EDITOR only: Use a generic room so we can develop, in cases where Scene API isn't found
-    /// </summary>
-    public void Initialize()
-    {
-        // sceneMesher should have some corner points. Use them to create the room
-        // fill an array with OVRSceneObjects so we can reuse the normal initialization flow
-        List<OVRSceneAnchor> tempSceneAnchors = new List<OVRSceneAnchor>();
-        float xMin = 0.0f;
-        float xMax = 0.0f;
-        float zMin = 0.0f;
-        float zMax = 0.0f;
-        const float height = 2.5f;
-        float systemFloor = 0.0f;
-        if (_sceneMesher._debugSplinePoints.Length >= 4)
-        {
-            // create a wall for each point
-            for (int i = 0; i < _sceneMesher._debugSplinePoints.Length; i++)
-            {
-                int nextID = (i == _sceneMesher._debugSplinePoints.Length - 1 ? 0 : i + 1);
-                Vector3 rightVec = _sceneMesher._debugSplinePoints[i].position - _sceneMesher._debugSplinePoints[nextID].position;
-                Vector3 fwdVec = Vector3.Cross(rightVec.normalized, Vector3.up);
-                GameObject wallObj = Instantiate(_anchorPrefab);
-                OVRSceneAnchor ovrso = wallObj.GetComponent<OVRSceneAnchor>();
-                wallObj.transform.position = _sceneMesher._debugSplinePoints[i].position - rightVec * 0.5f + Vector3.up * height * 0.5f;
-                wallObj.transform.rotation = Quaternion.LookRotation(fwdVec, Vector3.up);
-                Vector3 wallScale = new Vector3(rightVec.magnitude, height, 1.0f);
-                SetChildrenScale(wallObj.transform, wallScale);
-                wallObj.GetComponent<WorldBeyondRoomObject>()._dimensions = wallScale;
-                wallObj.GetComponent<WorldBeyondRoomObject>()._isWall = true;
-                tempSceneAnchors.Add(ovrso);
-
-                Vector3 pos = _sceneMesher._debugSplinePoints[i].position;
-                if (pos.x < xMin) xMin = pos.x;
-                if (pos.x > xMax) xMax = pos.x;
-                if (pos.z < zMin) zMin = pos.z;
-                if (pos.z > zMax) zMax = pos.z;
-            }
-
-            Vector3 floorScale = new Vector3(xMax - xMin, zMax - zMin, 1.0f);
-            Vector3 floorCenter = new Vector3((xMax + xMin) * 0.5f, systemFloor, (zMax + zMin) * 0.5f);
-
-            // then create floor/ceiling
-            GameObject floorObj = Instantiate(_anchorPrefab);
-            floorObj.transform.position = floorCenter;
-            floorObj.transform.rotation = Quaternion.LookRotation(Vector3.up, Vector3.forward);
-            SetChildrenScale(floorObj.transform, floorScale);
-            floorObj.GetComponent<WorldBeyondRoomObject>()._dimensions = floorScale;
-            floorObj.GetComponent<WorldBeyondRoomObject>()._isWall = false;
-            _floorSceneAnchor = floorObj.GetComponent<OVRSceneAnchor>();
-            tempSceneAnchors.Add(_floorSceneAnchor);
-
-            GameObject ceilingObj = Instantiate(_anchorPrefab);
-            ceilingObj.transform.position = floorCenter + Vector3.up * height;
-            ceilingObj.transform.rotation = Quaternion.LookRotation(-Vector3.up, Vector3.forward);
-            SetChildrenScale(ceilingObj.transform, floorScale);
-            ceilingObj.GetComponent<WorldBeyondRoomObject>()._dimensions = floorScale;
-            ceilingObj.GetComponent<WorldBeyondRoomObject>()._isWall = false;
-            OVRSceneAnchor ceilingSO = ceilingObj.GetComponent<OVRSceneAnchor>();
-            tempSceneAnchors.Add(ceilingSO);
-        }
-
-        Initialize(tempSceneAnchors.ToArray(), true);
-    }
-
     void SetChildrenScale(Transform parentTransform, Vector3 childScale)
     {
         for (var j = 0; j < parentTransform.childCount; j++)
@@ -286,7 +221,7 @@ public class VirtualRoom : MonoBehaviour
     /// Create the actual room surfaces, since the OVRSceneObject array contains just metadata.
     /// Attach the instantiated walls/furniture to the anchors, to ensure they're fixed to the real world.
     /// </summary>
-    public void Initialize(OVRSceneAnchor[] sceneAnchors, bool useFakeRoom = false)
+    public void Initialize(OVRSceneAnchor[] sceneAnchors)
     {
         _roomboxWalls.Clear();
 
@@ -299,43 +234,7 @@ public class VirtualRoom : MonoBehaviour
             WorldBeyondRoomObject wbro = instance.GetComponent<WorldBeyondRoomObject>();
             anchorsAsWBRO.Add(wbro);
             wbro._dimensions = instance.transform.GetChild(0).localScale;
-            if (useFakeRoom)
-            {
-                // special case behavior: all the anchors are fake, and are only walls/floor/ceiling
-                wbro._surfaceID = _roomboxWalls.Count;
-
-                // floor and ceiling are last two items in the array
-                if (i == sceneAnchors.Length-2)
-                {
-                    _roomFloorID = _roomboxWalls.Count;
-                    _floorSceneAnchor = sceneAnchors[i];
-
-                    // move the world slightly below the ground floor, so the virtual floor doesn't Z-fight
-                    WorldBeyondManager.Instance.MoveGroundFloor(instance.transform.position.y - _groundDelta);
-                    _floorHeight = instance.transform.position.y;
-                }
-                else if (i == sceneAnchors.Length - 1)
-                {
-                    _roomCeilingID = _roomboxWalls.Count;
-                }
-                _roomboxWalls.Add(wbro);
-
-                if (i < sceneAnchors.Length - 2)
-                {
-                    wbro._isWall = true;
-
-                    CreateWallBorderEffects(wbro);
-                    CreateWallDebris(wbro);
-                    CreateNavMeshObstacle(wbro);
-                }
-
-                // the collider on the root anchor object is only used by the wall toy
-                if (wbro.GetComponent<BoxCollider>())
-                {
-                    wbro.GetComponent<BoxCollider>().size = new Vector3(wbro._dimensions.x, wbro._dimensions.y, 0.01f);
-                }
-            }
-            else if (classification.Contains(OVRSceneManager.Classification.WallFace) ||
+            if (classification.Contains(OVRSceneManager.Classification.WallFace) ||
                 classification.Contains(OVRSceneManager.Classification.Floor) ||
                 classification.Contains(OVRSceneManager.Classification.Ceiling))
             {
@@ -430,7 +329,7 @@ public class VirtualRoom : MonoBehaviour
 
         AudioManager.SetRoomOpenness(GetRoomOpenAmount());
 
-        CreateSpecialEffectMesh(anchorsAsWBRO.ToArray(), useFakeRoom);
+        CreateSpecialEffectMesh(anchorsAsWBRO.ToArray());
     }
 
     /// <summary>
@@ -483,7 +382,7 @@ public class VirtualRoom : MonoBehaviour
     /// <summary>
     /// This creates the watertight single mesh, from all walls and furniture.
     /// </summary>
-    public void CreateSpecialEffectMesh(WorldBeyondRoomObject[] worldBeyondObjects, bool useFakeRoom = false)
+    public void CreateSpecialEffectMesh(WorldBeyondRoomObject[] worldBeyondObjects)
     {
         // for simplicity, doors/windows have been excluded from the experience
         // however, we'd still like them to render in this special effect mesh
@@ -491,33 +390,26 @@ public class VirtualRoom : MonoBehaviour
         List<Transform> quadFurniture = new List<Transform>();
         List<GameObject> doorsAndWindows = new List<GameObject>();
         float ceilingHeight = 1.0f;
-        if (!useFakeRoom)
+        for (int i = 0; i < worldBeyondObjects.Length; i++)
         {
-            for (int i = 0; i < worldBeyondObjects.Length; i++)
+            OVRSemanticClassification classification = worldBeyondObjects[i].GetComponent<OVRSemanticClassification>();
+            if (classification.Contains(OVRSceneManager.Classification.Desk) ||
+                classification.Contains(OVRSceneManager.Classification.Couch) ||
+                classification.Contains(OVRSceneManager.Classification.Other))
             {
-                OVRSemanticClassification classification = worldBeyondObjects[i].GetComponent<OVRSemanticClassification>();
-                if (classification.Contains(OVRSceneManager.Classification.Desk) ||
-                    classification.Contains(OVRSceneManager.Classification.Couch) ||
-                    classification.Contains(OVRSceneManager.Classification.Other))
-                {
-                    // any child will have correct scale
-                    cubeFurniture.Add(worldBeyondObjects[i].transform.GetChild(0));
-                }
-                else if (classification.Contains(OVRSceneManager.Classification.DoorFrame) ||
-                    classification.Contains(OVRSceneManager.Classification.WindowFrame))
-                {
-                    quadFurniture.Add(worldBeyondObjects[i].transform.GetChild(0));
-                    doorsAndWindows.Add(worldBeyondObjects[i].gameObject);
-                }
-                else if (classification.Contains(OVRSceneManager.Classification.Ceiling))
-                {
-                    ceilingHeight = worldBeyondObjects[i].transform.position.y;
-                }
+                // any child will have correct scale
+                cubeFurniture.Add(worldBeyondObjects[i].transform.GetChild(0));
             }
-        }
-        else
-        {
-            ceilingHeight = worldBeyondObjects[worldBeyondObjects.Length - 1].transform.position.y;
+            else if (classification.Contains(OVRSceneManager.Classification.DoorFrame) ||
+                classification.Contains(OVRSceneManager.Classification.WindowFrame))
+            {
+                quadFurniture.Add(worldBeyondObjects[i].transform.GetChild(0));
+                doorsAndWindows.Add(worldBeyondObjects[i].gameObject);
+            }
+            else if (classification.Contains(OVRSceneManager.Classification.Ceiling))
+            {
+                ceilingHeight = worldBeyondObjects[i].transform.position.y;
+            }
         }
 
         // create special effect mesh

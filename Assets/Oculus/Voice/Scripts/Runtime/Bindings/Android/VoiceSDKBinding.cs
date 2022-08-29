@@ -33,16 +33,16 @@ namespace Oculus.Voice.Bindings.Android
         public bool Active => binding.Call<bool>("isActive");
         public bool IsRequestActive => binding.Call<bool>("isRequestActive");
         public bool MicActive => binding.Call<bool>("isMicActive");
-        public bool PlatformSupportsWit => binding.Call<bool>("platformSupportsWit");
+        public bool PlatformSupportsWit => binding.Call<bool>("isSupported");
 
         public void Activate(string text)
         {
-            binding.Call("activate", text);
+            binding.Call("activate", text, "");
         }
 
         public void Activate(string text, WitRequestOptions options)
         {
-            binding.Call("activate", text);
+            binding.Call("activate", text, JsonUtility.ToJson(options));
         }
 
         public void Activate()
@@ -52,7 +52,7 @@ namespace Oculus.Voice.Bindings.Android
 
         public void Activate(WitRequestOptions options)
         {
-            binding.Call("activate");
+            binding.Call("activate", JsonUtility.ToJson(options));
         }
 
         public void ActivateImmediately()
@@ -62,12 +62,17 @@ namespace Oculus.Voice.Bindings.Android
 
         public void ActivateImmediately(WitRequestOptions options)
         {
-            binding.Call("activateImmediately");
+            binding.Call("activateImmediately", JsonUtility.ToJson(options));
         }
 
         public void Deactivate()
         {
             binding.Call("deactivate");
+        }
+
+        public void DeactivateAndAbortRequest()
+        {
+            binding.Call("deactivateAndAbortRequest");
         }
 
         public void SetRuntimeConfiguration(WitRuntimeConfiguration configuration)
@@ -78,6 +83,11 @@ namespace Oculus.Voice.Bindings.Android
         public void SetListener(VoiceSDKListenerBinding listener)
         {
             binding.Call("setListener", listener);
+        }
+
+        public void Connect()
+        {
+            binding.Call<bool>("connect");
         }
     }
 }

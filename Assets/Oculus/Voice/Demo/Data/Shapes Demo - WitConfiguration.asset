@@ -21,7 +21,18 @@ MonoBehaviour:
     createdAt: 
   configId: 4e21a24e472ab684e84db753427d5687
   clientAccessToken: 
+  timeoutMS: 10000
+  endpointConfiguration:
+    uriScheme: 
+    authority: 
+    port: 0
+    witApiVersion: 
+    speech: 
+    message: 
   entities: []
   intents: []
   traits: []
   isDemoOnly: 1
+  manifestLocalPath: ConduitManifest-254fc7c1-661a-4082-90d1-3031e54ef073.json
+  autoGenerateManifest: 0
+  openManifestOnGeneration: 0

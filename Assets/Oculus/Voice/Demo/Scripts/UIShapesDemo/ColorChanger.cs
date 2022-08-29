@@ -43,50 +43,59 @@ namespace Oculus.Voice.Demo.UIShapesDemo
         /// <param name="commandResult">Result data from Wit.ai activation to be processed</param>
         public void UpdateColor(WitResponseNode commandResult)
         {
-            string colorName = commandResult.GetFirstEntityValue("color:color");
-            string shape = commandResult.GetFirstEntityValue("shape:shape");
-            UpdateColor(colorName, shape);
+            string[] colorNames = commandResult.GetAllEntityValues("color:color");
+            string[] shapes = commandResult.GetAllEntityValues("shape:shape");
+            UpdateColor(colorNames, shapes);
         }
 
         /// <summary>
-        /// Processes the values of a result handler with a color and shape filter.
+        /// Updates the colors of a set of shape, or all colors split across the shapes
         /// </summary>
-        /// <param name="results">Results from result handler [0] color name, [1] shape</param>
-        public void UpdateColor(string[] results)
+        /// <param name="colorNames">The names of the colors to be processed</param>
+        /// <param name="shapes">The shape names or if empty all shapes</param>
+        public void UpdateColor(string[] colorNames, string[] shapes)
         {
-            var colorName = results[0];
-            var shape = results[1];
-
-            UpdateColor(colorName, shape);
-        }
-
-        /// <summary>
-        /// Updates the color of a shape or all shapes
-        /// </summary>
-        /// <param name="colorName">The name of a color to be processed</param>
-        /// <param name="shape">The shape name or if empty all shapes</param>
-        public void UpdateColor(string colorName, string shape)
-        {
-            if (!ColorUtility.TryParseHtmlString(colorName, out var color)) return;
-
-            if (string.IsNullOrEmpty(shape) || shape == "color")
+            if (shapes.Length != 0 && colorNames.Length != shapes.Length)
             {
-                for (int i = 0; i < transform.childCount; i++)
-                {
-                    SetColor(transform.GetChild(i), color);
-                }
+                return;
             }
-            else
+            if (shapes.Length == 0 || shapes[0] == "color"){
+                UpdateColorAllShapes(colorNames);
+                return;
+            }
+
+            for(var entity = 0; entity < colorNames.Length; entity++)
             {
+                if (!ColorUtility.TryParseHtmlString(colorNames[entity], out var color)) return;
+
                 for (int i = 0; i < transform.childCount; i++)
                 {
                     Transform child = transform.GetChild(i);
-                    if (String.Equals(shape, child.name,
-                        StringComparison.CurrentCultureIgnoreCase))
+                    if (String.Equals(shapes[entity], child.name,
+                            StringComparison.CurrentCultureIgnoreCase))
                     {
                         SetColor(child, color);
                         break;
                     }
+                }
+            }
+        }
+        /// <summary>
+        /// Updates the colors of the shapes, with colours split across the shapes
+        /// </summary>
+        /// <param name="colorNames">The names of the colors to be processed</param>
+        public void UpdateColorAllShapes(string[] colorNames)
+        {
+            var unspecifiedShape = 0;
+            for(var entity = 0; entity < colorNames.Length; entity++)
+            {
+                if (!ColorUtility.TryParseHtmlString(colorNames[entity], out var color)) return;
+
+                var splitLimit = (transform.childCount/colorNames.Length) * (entity+1);
+                while (unspecifiedShape < splitLimit)
+                {
+                    SetColor(transform.GetChild(unspecifiedShape), color);
+                    unspecifiedShape++;
                 }
             }
         }

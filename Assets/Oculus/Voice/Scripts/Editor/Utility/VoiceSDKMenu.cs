@@ -26,6 +26,7 @@ using Facebook.WitAi.Data.Configuration;
 using Facebook.WitAi.Data.Intents;
 using Facebook.WitAi.Data.Entities;
 using Facebook.WitAi.Data.Traits;
+using Facebook.WitAi.TTS.Editor.Preload;
 using Oculus.Voice.Windows;
 
 namespace Oculus.Voice.Utility
@@ -75,6 +76,34 @@ namespace Oculus.Voice.Utility
         public class VoiceCustomTraitPropertyDrawer : WitTraitPropertyDrawer
         {
 
+        }
+        #endregion
+
+        #region Scriptable Objects
+        [MenuItem("Assets/Create/Voice SDK/Dynamic Entities")]
+        public static void CreateDynamicEntities()
+        {
+            WitDynamicEntitiesData asset =
+                ScriptableObject.CreateInstance<WitDynamicEntitiesData>();
+
+            var path = EditorUtility.SaveFilePanel("Save Dynamic Entity", Application.dataPath,
+                "DynamicEntities", "asset");
+
+            if (!string.IsNullOrEmpty(path))
+            {
+                path = "Assets/" + path.Replace(Application.dataPath, "");
+                AssetDatabase.CreateAsset(asset, path);
+                AssetDatabase.SaveAssets();
+
+                EditorUtility.FocusProjectWindow();
+
+                Selection.activeObject = asset;
+            }
+        }
+        [MenuItem("Assets/Create/Voice SDK/TTS Preload Settings")]
+        public static void CreateTTSPreloadSettings()
+        {
+            TTSPreloadUtility.CreatePreloadSettings();
         }
         #endregion
     }

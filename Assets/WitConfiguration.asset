@@ -19,7 +19,16 @@ MonoBehaviour:
     lang: en
     isPrivate: 1
     createdAt: 2021-07-21T12:29:52-0700
+  configId: e0bebde1e63c1e44fa3dfade6f15b824
   clientAccessToken: H7OFRYEHUMD667UD7RCYW2LPQT7A4TZ2
+  timeoutMS: 10000
+  endpointConfiguration:
+    uriScheme: 
+    authority: 
+    port: 0
+    witApiVersion: 
+    speech: 
+    message: 
   entities:
   - witConfiguration: {fileID: 11400000}
     id: 186765573429346
@@ -28,14 +37,13 @@ MonoBehaviour:
     - free-text
     - keywords
     roles:
-    - 
+    - id: 
+      name: 
     keywords:
-    - witConfiguration: {fileID: 11400000}
-      keyword: come
+    - keyword: come
       synonyms:
       - come
-    - witConfiguration: {fileID: 11400000}
-      keyword: jump
+    - keyword: jump
       synonyms:
       - jump
   - witConfiguration: {fileID: 11400000}
@@ -45,10 +53,10 @@ MonoBehaviour:
     - free-text
     - keywords
     roles:
-    - 
+    - id: 
+      name: 
     keywords:
-    - witConfiguration: {fileID: 11400000}
-      keyword: here
+    - keyword: here
       synonyms:
       - here
   intents:
@@ -68,3 +76,8 @@ MonoBehaviour:
       lookups: []
       roles: []
       keywords: []
+  traits: []
+  isDemoOnly: 0
+  manifestLocalPath: ConduitManifest-aaffc98f-5a9e-47c4-b53d-6a0076f05ddb.json
+  autoGenerateManifest: 0
+  openManifestOnGeneration: 0

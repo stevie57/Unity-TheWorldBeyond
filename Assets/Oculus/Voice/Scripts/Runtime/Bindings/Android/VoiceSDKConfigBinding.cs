@@ -35,10 +35,10 @@ namespace Oculus.Voice.Bindings.Android
         public AndroidJavaObject ToJavaObject()
         {
             AndroidJavaObject witConfig =
-                new AndroidJavaObject("com.oculus.voice.sdk.api.WitConfiguration");
+                new AndroidJavaObject("com.oculus.assistant.api.voicesdk.immersivevoicecommands.WitConfiguration");
             witConfig.Set("clientAccessToken", configuration.witConfiguration.clientAccessToken);
 
-            AndroidJavaObject witRuntimeConfig = new AndroidJavaObject("com.oculus.voice.sdk.api.WitRuntimeConfiguration");
+            AndroidJavaObject witRuntimeConfig = new AndroidJavaObject("com.oculus.assistant.api.voicesdk.immersivevoicecommands.WitRuntimeConfiguration");
             witRuntimeConfig.Set("witConfiguration", witConfig);
 
             witRuntimeConfig.Set("minKeepAliveVolume", configuration.minKeepAliveVolume);
@@ -56,6 +56,8 @@ namespace Oculus.Voice.Bindings.Android
                 configuration.micBufferLengthInSeconds);
             witRuntimeConfig.Set("sendAudioToWit",
                 configuration.sendAudioToWit);
+            witRuntimeConfig.Set("preferredActivationOffset",
+                configuration.preferredActivationOffset);
 
             return witRuntimeConfig;
         }

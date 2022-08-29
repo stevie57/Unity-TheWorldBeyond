@@ -53,6 +53,28 @@ namespace Facebook.WitAi
         {
             EditorGUILayout.LabelField(key, text, WitStyles.TextField);
         }
+        public static void LayoutKeyObjectLabels(string key, object obj)
+        {
+            // Null
+            if (obj == null)
+            {
+                LayoutKeyLabel(key, "NULL");
+                return;
+            }
+            // Foldout
+            bool foldoutVoice = WitEditorUI.LayoutFoldout(new GUIContent(key), obj);
+            if (!foldoutVoice)
+            {
+                return;
+            }
+            // Iterate fields
+            EditorGUI.indentLevel++;
+            foreach (var field in obj.GetType().GetFields())
+            {
+                LayoutKeyLabel(field.Name, field.GetValue(obj).ToString());
+            }
+            EditorGUI.indentLevel--;
+        }
         #endregion
 
         #region BUTTONS
@@ -308,8 +330,26 @@ namespace Facebook.WitAi
         }
         public static void LayoutPopup(string key, string[] options, ref int selectionValue, ref bool isUpdated)
         {
-            // Simple layout
-            int newSelectionValue = EditorGUILayout.Popup(key, selectionValue, options, WitStyles.Popup);
+            // Default
+            int newSelectionValue = selectionValue;
+
+            // No options
+            if (options == null || options.Length == 0)
+            {
+                newSelectionValue = -1;
+                EditorGUILayout.LabelField(key, "<color=FF0000>No Options</color>", WitStyles.Label);
+            }
+            // Single Option
+            else if (options.Length == 1)
+            {
+                newSelectionValue = 0;
+                EditorGUILayout.LabelField(key, options[0], WitStyles.Label);
+            }
+            // Popup Options
+            else
+            {
+                newSelectionValue = EditorGUILayout.Popup(key, selectionValue, options, WitStyles.Popup);
+            }
 
             // Update
             if (selectionValue != newSelectionValue)

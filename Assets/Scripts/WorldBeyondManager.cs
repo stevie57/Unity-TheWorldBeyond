@@ -254,8 +254,12 @@ public class WorldBeyondManager : MonoBehaviour
                     _gameController = OVRInput.Controller.LTouch;
                 }
             }
-            HideInvisibleHandAccessories();
-            MultiToy.Instance.UseHands(_usingHands, OVRInput.GetActiveController() == OVRInput.Controller.RTouch);
+
+            MultiToy.Instance.UseHands(_usingHands, _gameController == OVRInput.Controller.RTouch);
+            MultiToy.Instance.EnableCollision(!_usingHands);
+
+            // update tutorial text when switching input, if onscreen
+            WorldBeyondTutorial.Instance.UpdateMessageTextForInput();
         }
 
         // constantly check if the player is within the polygonal floorplan of the room
@@ -298,7 +302,7 @@ public class WorldBeyondManager : MonoBehaviour
                 bool rightHandApproaching = rightRange <= handRange;
                 if (MultiToy.Instance._toyVisible && (leftHandApproaching || rightHandApproaching))
                 {
-                    if (_usingHands)
+                    if (usingHands)
                     {
                         _gameController = leftRange < rightRange ? OVRInput.Controller.LHand : OVRInput.Controller.RHand;
                         MultiToy.Instance.SetToyMesh(MultiToy.ToyOption.None);
@@ -308,8 +312,8 @@ public class WorldBeyondManager : MonoBehaviour
                         _gameController = leftRange < rightRange ? OVRInput.Controller.LTouch : OVRInput.Controller.RTouch;
                         MultiToy.Instance.ShowPassthroughGlove(true, _gameController == OVRInput.Controller.RTouch);
                     }
-                    MultiToy.Instance.EnableCollision(!_usingHands);
-                    MultiToy.Instance.ChildLightCone(_usingHands);
+                    _usingHands = usingHands;
+
                     _lightBeam.CloseBeam();
                     MultiToy.Instance._grabToy_1.Play();
                     ForceChapter(GameChapter.SearchForOppy);
@@ -373,7 +377,10 @@ public class WorldBeyondManager : MonoBehaviour
         }
         _vrRoomEffectTimer = Mathf.Clamp01(_vrRoomEffectTimer);
         _vrRoomEffectMaskTimer = Mathf.Clamp01(_vrRoomEffectMaskTimer);
-        HideInvisibleHandAccessories();
+        if (_usingHands)
+        {
+            HideInvisibleHandAccessories();
+        }
     }
 
     /// <summary>
@@ -381,8 +388,8 @@ public class WorldBeyondManager : MonoBehaviour
     /// </summary>
     private void HideInvisibleHandAccessories()
     {
-        bool leftHandHidden = (_usingHands && (!_leftHand.IsDataValid || _leftHandVisual.ForceOffVisibility));
-        bool rightHandHidden = (_usingHands && (!_rightHand.IsDataValid || _rightHandVisual.ForceOffVisibility));
+        bool leftHandHidden = !_leftHand.IsDataValid || _leftHandVisual.ForceOffVisibility;
+        bool rightHandHidden = !_rightHand.IsDataValid || _rightHandVisual.ForceOffVisibility;
         var grabbedBall = MultiToy.Instance._grabbedBall;
 
         // Called before updating distance so that the hidden property is set while the ball is close to the hand
@@ -663,7 +670,6 @@ public class WorldBeyondManager : MonoBehaviour
         yield return new WaitForSeconds(spawnTime);
         MultiToy.Instance.ShowToy(true);
         MultiToy.Instance.SetToyMesh(MultiToy.ToyOption.Flashlight);
-        MultiToy.Instance.ShowPassthroughGlove(false);
         _toyBasePosition = GetRandomToyPosition();
         _lightBeam.gameObject.SetActive(true);
         _lightBeam.transform.localScale = new Vector3(1, _ceilingHeight, 1);

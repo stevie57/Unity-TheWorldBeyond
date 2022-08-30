@@ -372,8 +372,7 @@ public class MultiToy : MonoBehaviour
             case WorldBeyondManager.GameChapter.Introduction:
                 DeactivateAllToys();
                 ShowToy(false);
-                ShowPassthroughGlove(false);
-                _toyIndexController = (int) ToyOption.None;
+                _toyIndexController = (int) ToyOption.Flashlight;
                 _toyIndexHand = (int) ToyOption.None;
                 _canSwitchToys = false;
                 _throwBallTaught = false;
@@ -706,13 +705,16 @@ public class MultiToy : MonoBehaviour
     {
         if (usingHands)
         {
-            SetToyMesh(ToyOption.None);
+            if (_toyVisible && WorldBeyondManager.Instance._currentChapter >= WorldBeyondManager.GameChapter.SearchForOppy)
+            {
+                SetToyMesh(ToyOption.None);
+            }
             ShowPassthroughGlove(false);
         }
         else
         {
             SetToyMesh((ToyOption) _toyIndexController);
-            if (_toyVisible)
+            if (_toyVisible && WorldBeyondManager.Instance._currentChapter >= WorldBeyondManager.GameChapter.SearchForOppy)
             {
                 ShowPassthroughGlove(true, rightHand);
             }

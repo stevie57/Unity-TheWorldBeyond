@@ -77,6 +77,11 @@ public class WorldBeyondTutorial : MonoBehaviour
         UpdatePosition();
     }
 
+    public void UpdateMessageTextForInput()
+    {
+        DisplayMessage(_currentMessage);
+    }
+
     public void DisplayMessage(TutorialMessage message)
     {
         if (_hitCriticalError)
@@ -159,12 +164,15 @@ public class WorldBeyondTutorial : MonoBehaviour
     {
         // Don't hide the popup if it's attached to your view
         if (_attachToView) return;
-        _canvasObject.enabled = false;
+        _canvasObject.gameObject.SetActive(false);
     }
 
     public void ForceVisible()
     {
-        _canvasObject.enabled = true;
+        if (_currentMessage != TutorialMessage.None)
+        {
+            _canvasObject.gameObject.SetActive(true);
+        }
     }
 
     public void HideMessage(TutorialMessage message)
@@ -172,6 +180,7 @@ public class WorldBeyondTutorial : MonoBehaviour
         if (_currentMessage == message)
         {
             _canvasObject.gameObject.SetActive(false);
+            _currentMessage = TutorialMessage.None;
         }
     }
 

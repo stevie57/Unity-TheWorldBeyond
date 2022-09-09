@@ -54,7 +54,7 @@ public static partial class OVRPlugin
 #if OVRPLUGIN_UNSUPPORTED_PLATFORM
 	public static readonly System.Version wrapperVersion = _versionZero;
 #else
-	public static readonly System.Version wrapperVersion = OVRP_1_74_0.version;
+	public static readonly System.Version wrapperVersion = OVRP_1_75_0.version;
 #endif
 
 #if !OVRPLUGIN_UNSUPPORTED_PLATFORM
@@ -1028,9 +1028,7 @@ public static partial class OVRPlugin
 		public int LayerFlags;
 
 		//Eye FOV-only members.
-		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
 		public Fovf[] Fov;
-		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
 		public Rectf[] VisibleRect;
 		public Sizei MaxViewportSize;
 		public EyeTextureFormat DepthFormat;
@@ -1049,6 +1047,80 @@ public static partial class OVRPlugin
 				+ delim + SampleCount.ToString()
 				+ delim + Format.ToString()
 				+ delim + LayerFlags.ToString();
+		}
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	private struct LayerDescInternal
+	{
+		public OverlayShape Shape;
+		public LayerLayout Layout;
+		public Sizei TextureSize;
+		public int MipLevels;
+		public int SampleCount;
+		public EyeTextureFormat Format;
+		public int LayerFlags;
+
+		public Fovf Fov0;
+		public Fovf Fov1;
+		public Rectf VisibleRect0;
+		public Rectf VisibleRect1;
+		public Sizei MaxViewportSize;
+		public EyeTextureFormat DepthFormat;
+
+		public EyeTextureFormat MotionVectorFormat;
+		public EyeTextureFormat MotionVectorDepthFormat;
+		public Sizei MotionVectorTextureSize;
+
+		public LayerDescInternal(LayerDesc layerDesc)
+		{
+			Shape = layerDesc.Shape;
+			Layout = layerDesc.Layout;
+			TextureSize = layerDesc.TextureSize;
+			MipLevels = layerDesc.MipLevels;
+			SampleCount = layerDesc.SampleCount;
+			Format = layerDesc.Format;
+			LayerFlags = layerDesc.LayerFlags;
+
+			Fov0 = layerDesc.Fov[0];
+			Fov1 = layerDesc.Fov[1];
+			VisibleRect0 = layerDesc.VisibleRect[0];
+			VisibleRect1 = layerDesc.VisibleRect[1];
+
+			MaxViewportSize = layerDesc.MaxViewportSize;
+			DepthFormat = layerDesc.DepthFormat;
+			MotionVectorFormat = layerDesc.MotionVectorFormat;
+			MotionVectorDepthFormat = layerDesc.MotionVectorDepthFormat;
+			MotionVectorTextureSize = layerDesc.MotionVectorTextureSize;
+		}
+
+		public LayerDesc ToLayerDesc()
+		{
+			LayerDesc layerDesc = new LayerDesc();
+			layerDesc.Shape = Shape;
+			layerDesc.Layout = Layout;
+			layerDesc.TextureSize = TextureSize;
+			layerDesc.MipLevels = MipLevels;
+			layerDesc.SampleCount = SampleCount;
+			layerDesc.Format = Format;
+			layerDesc.LayerFlags = LayerFlags;
+
+			Array.Resize(ref layerDesc.Fov, 2);
+			layerDesc.Fov[0] = Fov0;
+			layerDesc.Fov[1] = Fov1;
+
+
+			Array.Resize(ref layerDesc.VisibleRect, 2);
+			layerDesc.VisibleRect[0] = VisibleRect0;
+			layerDesc.VisibleRect[1] = VisibleRect1;
+
+			layerDesc.MaxViewportSize = MaxViewportSize;
+			layerDesc.DepthFormat = DepthFormat;
+			layerDesc.MotionVectorFormat = MotionVectorFormat;
+			layerDesc.MotionVectorDepthFormat = MotionVectorDepthFormat;
+			layerDesc.MotionVectorTextureSize = MotionVectorTextureSize;
+
+			return layerDesc;
 		}
 	}
 
@@ -1492,6 +1564,7 @@ public static partial class OVRPlugin
 
 
 		SceneCaptureComplete = 100,
+
 
 	}
 
@@ -2483,17 +2556,16 @@ public static partial class OVRPlugin
 #if OVRPLUGIN_UNSUPPORTED_PLATFORM
 		return new LayerDesc();
 #else
-		LayerDesc layerDesc = new LayerDesc();
-		if (!initialized)
-			return layerDesc;
-
-		if (version >= OVRP_1_15_0.version)
+		if (!initialized || version < OVRP_1_15_0.version)
 		{
-			OVRP_1_15_0.ovrp_CalculateLayerDesc(shape, layout, ref textureSize,
-				mipLevels, sampleCount, format, layerFlags, ref layerDesc);
+			return new LayerDesc();
 		}
 
-		return layerDesc;
+		LayerDescInternal layerDescInternal = new LayerDescInternal();
+		OVRP_1_15_0.ovrp_CalculateLayerDesc(shape, layout, ref textureSize, mipLevels, sampleCount,
+			format, layerFlags, ref layerDescInternal);
+
+		return layerDescInternal.ToLayerDesc();
 #endif
 	}
 
@@ -2505,17 +2577,19 @@ public static partial class OVRPlugin
 		if (!initialized)
 			return false;
 
-		if (version >= OVRP_1_28_0.version)
-			return OVRP_1_28_0.ovrp_EnqueueSetupLayer2(ref desc, compositionDepth, layerID) == Result.Success;
-		else if (version >= OVRP_1_15_0.version)
+		LayerDescInternal layerDescInternal = new LayerDescInternal(desc);
+		if (version >= OVRP_1_28_0.version) {
+			return OVRP_1_28_0.ovrp_EnqueueSetupLayer2(ref layerDescInternal, compositionDepth, layerID) == Result.Success;
+		}
+
+		if (version >= OVRP_1_15_0.version)
 		{
 			if (compositionDepth != 0)
 			{
 				Debug.LogWarning("Use Oculus Plugin 1.28.0 or above to support non-zero compositionDepth");
 			}
-			return OVRP_1_15_0.ovrp_EnqueueSetupLayer(ref desc, layerID) == Result.Success;
+			return OVRP_1_15_0.ovrp_EnqueueSetupLayer(ref layerDescInternal, layerID) == Result.Success;
 		}
-
 		return false;
 #endif
 	}
@@ -7433,10 +7507,10 @@ public static partial class OVRPlugin
 
 		[DllImport(pluginName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern Result ovrp_CalculateLayerDesc(OverlayShape shape, LayerLayout layout, ref Sizei textureSize,
-			int mipLevels, int sampleCount, EyeTextureFormat format, int layerFlags, ref LayerDesc layerDesc);
+			int mipLevels, int sampleCount, EyeTextureFormat format, int layerFlags, ref LayerDescInternal layerDesc);
 
 		[DllImport(pluginName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern Result ovrp_EnqueueSetupLayer(ref LayerDesc desc, IntPtr layerId);
+		public static extern Result ovrp_EnqueueSetupLayer(ref LayerDescInternal desc, IntPtr layerId);
 
 		[DllImport(pluginName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern Result ovrp_EnqueueDestroyLayer(IntPtr layerId);
@@ -7597,7 +7671,7 @@ public static partial class OVRPlugin
 		public static extern Result ovrp_SendEvent(string name, string param);
 
 		[DllImport(pluginName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern Result ovrp_EnqueueSetupLayer2(ref LayerDesc desc, int compositionDepth, IntPtr layerId);
+		public static extern Result ovrp_EnqueueSetupLayer2(ref LayerDescInternal desc, int compositionDepth, IntPtr layerId);
 	}
 
 	private static class OVRP_1_29_0
@@ -8295,6 +8369,11 @@ public static partial class OVRPlugin
 
 		[DllImport(pluginName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern Result ovrp_GetRenderModelProperties2(string path, RenderModelFlags flags, out RenderModelPropertiesInternal properties);
+	}
+
+	private static class OVRP_1_75_0
+	{
+		public static readonly System.Version version = new System.Version(1, 75, 0);
 	}
 	/* INSERT NEW OVRP CLASS ABOVE THIS LINE */
 }

@@ -545,10 +545,10 @@ public class OVRLint : EditorWindow
 			}
 		}
 
-		var clips = GameObject.FindObjectsOfType<AudioClip>();
-		for (int i = 0; i < clips.Length; ++i)
+		for (int i = 0; i < sources.Length; ++i)
 		{
-			if (clips[i].loadType == AudioClipLoadType.DecompressOnLoad)
+			AudioSource audioSource = sources[i];
+			if (audioSource.clip.loadType == AudioClipLoadType.DecompressOnLoad)
 			{
 				AddFix(eRecordType.StaticCommon, "Audio Loading", "For fast loading, please don't use decompress on load for audio clips", delegate (UnityEngine.Object obj, bool last, int selected)
 				{
@@ -562,15 +562,19 @@ public class OVRLint : EditorWindow
 						SetAudioLoadType(thisClip, AudioClipLoadType.Streaming, last);
 					}
 
-				}, clips[i], false, "Change to Compressed in Memory", "Change to Streaming");
+				}, audioSource.clip, false, "Change to Compressed in Memory", "Change to Streaming");
 			}
 
-			if (clips[i].preloadAudioData)
+#if UNITY_2022_2_OR_NEWER
+			if (GetAudioPreload(audioSource.clip))
+#else
+			if (audioSource.clip.preloadAudioData)
+#endif
 			{
 				AddFix(eRecordType.StaticCommon, "Audio Preload", "For fast loading, please don't preload data for audio clips.", delegate (UnityEngine.Object obj, bool last, int selected)
 				{
-					SetAudioPreload(clips[i], false, last);
-				}, clips[i], false, "Fix");
+					SetAudioPreload(audioSource.clip, false, last);
+				}, audioSource.clip, false, "Fix");
 			}
 		}
 
@@ -937,6 +941,45 @@ public class OVRLint : EditorWindow
 		return light.lightmapBakeType == LightmapBakeType.Baked;
 	}
 
+#if UNITY_2022_2_OR_NEWER
+	static void SetAudioPreload(AudioClip clip, bool preload, bool refreshImmediately)
+	{
+		if (clip != null)
+		{
+			string assetPath = AssetDatabase.GetAssetPath(clip);
+			AudioImporter importer = AssetImporter.GetAtPath(assetPath) as AudioImporter;
+			if (importer != null)
+			{
+				var audioSettings = importer.defaultSampleSettings;
+				if (preload != audioSettings.preloadAudioData)
+				{
+					audioSettings.preloadAudioData = preload;
+
+					importer.defaultSampleSettings = audioSettings;
+					AssetDatabase.ImportAsset(assetPath);
+					if (refreshImmediately)
+					{
+						AssetDatabase.Refresh();
+					}
+				}
+			}
+		}
+	}
+
+	static bool GetAudioPreload(AudioClip clip)
+	{
+		if (clip != null)
+		{
+			string assetPath = AssetDatabase.GetAssetPath(clip);
+			AudioImporter importer = AssetImporter.GetAtPath(assetPath) as AudioImporter;
+			if (importer != null)
+			{
+				return importer.defaultSampleSettings.preloadAudioData;
+			}
+		}
+		return false;
+	}
+#else
 	static void SetAudioPreload(AudioClip clip, bool preload, bool refreshImmediately)
 	{
 		if (clip != null)
@@ -958,6 +1001,7 @@ public class OVRLint : EditorWindow
 			}
 		}
 	}
+#endif
 
 	static void SetAudioLoadType(AudioClip clip, AudioClipLoadType loadType, bool refreshImmediately)
 	{

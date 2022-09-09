@@ -38,6 +38,7 @@ public class OVRProjectConfigEditor : Editor
 	{
 		// Target Devices
 		EditorGUILayout.LabelField("Target Devices", EditorStyles.boldLabel);
+		bool useOculusXRSettings = false;
 #if PRIORITIZE_OCULUS_XR_SETTINGS
 		EditorGUILayout.BeginHorizontal();
 		EditorGUILayout.LabelField("Configure Target Devices in Oculus XR Plugin Settings.", GUILayout.Width(320));
@@ -45,30 +46,33 @@ public class OVRProjectConfigEditor : Editor
 		if (GUILayout.Button("Open Settings"))
 				SettingsService.OpenProjectSettings("Project/XR Plug-in Management/Oculus");
 		EditorGUILayout.EndHorizontal();
-#else
-		bool hasModified = false;
-
-		foreach (OVRProjectConfig.DeviceType deviceType in System.Enum.GetValues(typeof(OVRProjectConfig.DeviceType)))
-		{
-			bool oldSupportsDevice = projectConfig.targetDeviceTypes.Contains(deviceType);
-			bool newSupportsDevice = oldSupportsDevice;
-			OVREditorUtil.SetupBoolField(projectConfig, ObjectNames.NicifyVariableName(deviceType.ToString()), ref newSupportsDevice, ref hasModified);
-
-			if (newSupportsDevice && !oldSupportsDevice)
-			{
-				projectConfig.targetDeviceTypes.Add(deviceType);
-			}
-			else if (oldSupportsDevice && !newSupportsDevice)
-			{
-				projectConfig.targetDeviceTypes.Remove(deviceType);
-			}
-		}
-
-		if (hasModified)
-		{
-			OVRProjectConfig.CommitProjectConfig(projectConfig);
-		}
+		useOculusXRSettings = true;
 #endif
+		if (!useOculusXRSettings)
+		{
+			bool hasModified = false;
+
+			foreach (OVRProjectConfig.DeviceType deviceType in System.Enum.GetValues(typeof(OVRProjectConfig.DeviceType)))
+			{
+				bool oldSupportsDevice = projectConfig.targetDeviceTypes.Contains(deviceType);
+				bool newSupportsDevice = oldSupportsDevice;
+				OVREditorUtil.SetupBoolField(projectConfig, ObjectNames.NicifyVariableName(deviceType.ToString()), ref newSupportsDevice, ref hasModified);
+
+				if (newSupportsDevice && !oldSupportsDevice)
+				{
+					projectConfig.targetDeviceTypes.Add(deviceType);
+				}
+				else if (oldSupportsDevice && !newSupportsDevice)
+				{
+					projectConfig.targetDeviceTypes.Remove(deviceType);
+				}
+			}
+
+			if (hasModified)
+			{
+				OVRProjectConfig.CommitProjectConfig(projectConfig);
+			}
+		}
 	}
 
 	enum eProjectConfigTab

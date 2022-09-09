@@ -55,7 +55,9 @@ public class OVRGradleGeneration
 	public OVRADBTool adbTool;
 	public Process adbProcess;
 
-	public int callbackOrder { get { return 3; } }
+	private int _callbackOrder = 3;
+
+	public int callbackOrder { get { return _callbackOrder; } }
 	static private System.DateTime buildStartTime;
 	static private System.Guid buildGuid;
 

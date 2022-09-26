@@ -240,8 +240,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a53269c35faef44f9d2ee33288f969c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _passthroughWall: {fileID: 5011641719771826592}
   _passthroughMesh: {fileID: 5011641719771826592}
+  _darkRoomMaterial: {fileID: 2100000, guid: 79615458149184b47a963a27b26fd6d9, type: 2}
   _surfaceID: 0
   _dimensions: {x: 1, y: 1, z: 1}
   _isWall: 0

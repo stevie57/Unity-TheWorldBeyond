@@ -24,6 +24,8 @@ using UnityEngine;
 public class WorldBeyondRoomObject : MonoBehaviour
 {
     public MeshRenderer _passthroughMesh;
+    Material _defaultMaterial;
+    public Material _darkRoomMaterial;
     public int _surfaceID = 0;
     public Vector3 _dimensions = Vector3.one;
 
@@ -41,6 +43,11 @@ public class WorldBeyondRoomObject : MonoBehaviour
     public Vector3 _impactPosition = new Vector3(0, 1000, 0);
     public List<WallEdge> wallEdges = new List<WallEdge>();
     public List<GameObject> wallDebris = new List<GameObject>();
+
+    private void Start()
+    {
+        _defaultMaterial = _passthroughMesh.material;
+    }
 
     private void Update()
     {
@@ -111,5 +118,13 @@ public class WorldBeyondRoomObject : MonoBehaviour
         {
             edge.UpdateParticleMaterial(0.0f, Vector3.up * 1000, 0.0f);
         }
+    }
+
+    /// <summary>
+    /// During the intro sequence when the MultiToy appears, the room is a different material
+    /// </summary>
+    public void ShowDarkRoomMaterial(bool showDarkRoom)
+    {
+        _passthroughMesh.material = showDarkRoom ? _darkRoomMaterial : _defaultMaterial;
     }
 }

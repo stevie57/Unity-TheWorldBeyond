@@ -34,7 +34,6 @@ public class WorldBeyondManager : MonoBehaviour
     [Header("Scene Preview")]
     [SerializeField] private OVRSceneManager _sceneManager;
     [SerializeField] private OVRPassthroughLayer _passthroughLayer;
-    float _ceilingHeight = 3.0f;
     bool _sceneModelLoaded = false;
     float _floorHeight = 0.0f;
     // after the Scene has been loaded successfuly, we still wait a frame before the data has "settled"
@@ -462,6 +461,7 @@ public class WorldBeyondManager : MonoBehaviour
                 break;
             case GameChapter.Introduction:
                 AudioManager.SetSnapshot_Introduction();
+                VirtualRoom.Instance.ShowDarkRoom(true);
                 VirtualRoom.Instance.AnimateEffectMesh();
                 StartCoroutine(PlayIntroPassthrough());
                 break;
@@ -576,6 +576,7 @@ public class WorldBeyondManager : MonoBehaviour
             if (timer >= flickerTimer)
             {
                 VirtualRoom.Instance.ShowAllWalls(true);
+                VirtualRoom.Instance.ShowDarkRoom(false);
                 VirtualRoom.Instance.SetRoomSaturation(IsGreyPassthrough() ? 0 : 1);
                 WorldBeyondEnvironment.Instance.ShowEnvironment(true);
             }
@@ -672,7 +673,7 @@ public class WorldBeyondManager : MonoBehaviour
         MultiToy.Instance.SetToyMesh(MultiToy.ToyOption.Flashlight);
         _toyBasePosition = GetRandomToyPosition();
         _lightBeam.gameObject.SetActive(true);
-        _lightBeam.transform.localScale = new Vector3(1, _ceilingHeight, 1);
+        _lightBeam.transform.localScale = new Vector3(1, VirtualRoom.Instance.GetCeilingHeight(), 1);
         _lightBeam.Prepare(_toyBasePosition);
     }
 

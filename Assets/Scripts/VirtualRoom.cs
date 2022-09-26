@@ -36,11 +36,12 @@ public class VirtualRoom : MonoBehaviour
     List<WorldBeyondRoomObject> _roomboxFurnishings = new List<WorldBeyondRoomObject>();
     List<WorldBeyondRoomObject> _roomboxWalls = new List<WorldBeyondRoomObject>();
     public SceneMesher _sceneMesher;
+    bool _sceneMeshCreated = false;
     List<Vector3> _cornerPoints = new List<Vector3>();
     int _roomFloorID;
     int _roomCeilingID;
     float _floorHeight = 0.0f;
-    float _wallHeight = 1.0f;
+    float _wallHeight = 3.0f;
 
     // if an anchor is within this angle tolerance, snap it to be gravity-aligned
     float _alignmentAngleThreshold = 5.0f;
@@ -226,6 +227,7 @@ public class VirtualRoom : MonoBehaviour
         _roomboxWalls.Clear();
 
         List<WorldBeyondRoomObject> anchorsAsWBRO = new List<WorldBeyondRoomObject>();
+        List<GameObject> doorsAndWindows = new List<GameObject>();
         for (int i = 0; i < sceneAnchors.Length; i++)
         {
             OVRSceneAnchor instance = sceneAnchors[i];
@@ -301,6 +303,11 @@ public class VirtualRoom : MonoBehaviour
                     CreateFurnitureDebris(instance.transform, objLocalScale);
                 }
             }
+            else if (classification.Contains(OVRSceneManager.Classification.DoorFrame) ||
+               classification.Contains(OVRSceneManager.Classification.WindowFrame))
+            {
+                doorsAndWindows.Add(instance.gameObject);
+            }
         }
 
         if (_roomboxWalls.Count < 5)
@@ -330,6 +337,13 @@ public class VirtualRoom : MonoBehaviour
         AudioManager.SetRoomOpenness(GetRoomOpenAmount());
 
         CreateSpecialEffectMesh(anchorsAsWBRO.ToArray());
+
+        // doors and windows aren't used in the experience, because they would add complexity
+        // they are however used in the special effect mesh, so must be deleted after that is created
+        foreach (GameObject obj in doorsAndWindows)
+        {
+            Destroy(obj);
+        }
     }
 
     /// <summary>
@@ -415,13 +429,18 @@ public class VirtualRoom : MonoBehaviour
         // create special effect mesh
         if (_sceneMesher)
         {
-            _sceneMesh = _sceneMesher.CreateSceneMesh(_cornerPoints, cubeFurniture.ToArray(), quadFurniture.ToArray(), ceilingHeight);
-        }
-
-        // doors and windows aren't used in the experience, only for the special effect mesh
-        foreach (GameObject obj in doorsAndWindows)
-        {
-            Destroy(obj);
+            try
+            {
+                _sceneMesh = _sceneMesher.CreateSceneMesh(_cornerPoints, cubeFurniture.ToArray(), quadFurniture.ToArray(), ceilingHeight);
+                // attach it to an anchor object so it sticks to the real world
+                _sceneMesh.transform.parent = _floorSceneAnchor.transform;
+                _sceneMeshCreated = true;
+            }
+            catch
+            {
+                Debug.Log($"[{nameof(VirtualRoom)}]: Scene meshing failed.");
+                _sceneMeshCreated = false;
+            }
         }
     }
 
@@ -515,16 +534,32 @@ public class VirtualRoom : MonoBehaviour
     /// </summary>
     public void AnimateEffectMesh()
     {
-        if (!_sceneMesh)
+        _effectRadius = 2.0f;
+        if (_sceneMeshCreated)
         {
-            return;
+            _sceneMesh.enabled = true;
+            _effectRadius = _sceneMesher.GetRoomDiameter() * 0.4f;
+            _sceneMesh.material.SetVector("_EffectPosition", Vector3.up * 1000.0f);
+            _sceneMesh.material.SetFloat("_EffectRadius", _effectRadius);
+            _sceneMesh.material.SetFloat("_EffectWidth", 0.1f);
+            _sceneMesh.material.SetFloat("_CeilingHeight", _sceneMesher._ceilingHeight);
         }
-        _sceneMesh.enabled = true;
-        _effectRadius = _sceneMesher.GetRoomDiameter() * 0.4f;
-        _sceneMesh.material.SetVector("_EffectPosition", Vector3.up * 1000.0f);
-        _sceneMesh.material.SetFloat("_EffectRadius", _effectRadius);
-        _sceneMesh.material.SetFloat("_EffectWidth", 0.1f);
-        _sceneMesh.material.SetFloat("_CeilingHeight", _sceneMesher._ceilingHeight);
+        else
+        {
+            for (int i = 0; i < _roomboxFurnishings.Count; i++)
+            {
+                _roomboxFurnishings[i]._passthroughMesh.material.SetVector("_EffectPosition", Vector3.up * 1000.0f);
+                _roomboxFurnishings[i]._passthroughMesh.material.SetFloat("_EffectRadius", _effectRadius);
+                _roomboxFurnishings[i]._passthroughMesh.material.SetFloat("_EffectWidth", 0.1f);
+            }
+
+            for (int i = 0; i < _roomboxWalls.Count; i++)
+            {
+                _roomboxWalls[i]._passthroughMesh.material.SetVector("_EffectPosition", Vector3.up * 1000.0f);
+                _roomboxWalls[i]._passthroughMesh.material.SetFloat("_EffectRadius", _effectRadius);
+                _roomboxWalls[i]._passthroughMesh.material.SetFloat("_EffectWidth", 0.1f);
+            }
+        }
     }
 
     /// <summary>
@@ -532,7 +567,10 @@ public class VirtualRoom : MonoBehaviour
     /// </summary>
     public void HideEffectMesh()
     {
-        if (_sceneMesh) _sceneMesh.enabled = false;
+        if (_sceneMeshCreated)
+        {
+            _sceneMesh.enabled = false;
+        }
     }
 
     /// <summary>
@@ -846,11 +884,7 @@ public class VirtualRoom : MonoBehaviour
     /// </summary>
     public float GetCeilingHeight()
     {
-        if (_sceneMesher)
-        {
-            return _sceneMesher._ceilingHeight;
-        }
-        return 1.0f;
+        return _wallHeight;
     }
 
     /// <summary>
@@ -885,10 +919,12 @@ public class VirtualRoom : MonoBehaviour
     /// </summary>
     public void SetEdgeEffectIntensity(float normValue)
     {
-        if (!_sceneMesh) return;
-        float intensity = _edgeIntensity.Evaluate(normValue);
-        _sceneMesh.material.SetFloat("_EffectIntensity", intensity);
-        _sceneMesh.material.SetFloat("_EdgeTimeline", normValue);
+        if (_sceneMeshCreated)
+        {
+            float intensity = _edgeIntensity.Evaluate(normValue);
+            _sceneMesh.material.SetFloat("_EffectIntensity", intensity);
+            _sceneMesh.material.SetFloat("_EdgeTimeline", normValue);
+        }
     }
 
     /// <summary>
@@ -896,9 +932,25 @@ public class VirtualRoom : MonoBehaviour
     /// </summary>
     public void SetEffectPosition(Vector3 worldPos, float timer)
     {
-        if (!_sceneMesh) return;
-        _sceneMesh.material.SetVector("_EffectPosition", worldPos);
-        _sceneMesh.material.SetFloat("_EffectRadius", timer * _effectRadius);
+        if (_sceneMeshCreated)
+        {
+            _sceneMesh.material.SetVector("_EffectPosition", worldPos);
+            _sceneMesh.material.SetFloat("_EffectRadius", timer * _effectRadius);
+        }
+        else
+        {
+            for (int i = 0; i < _roomboxFurnishings.Count; i++)
+            {
+                _roomboxFurnishings[i]._passthroughMesh.material.SetVector("_EffectPosition", worldPos);
+                _roomboxFurnishings[i]._passthroughMesh.material.SetFloat("_EffectRadius", timer * _effectRadius);
+            }
+
+            for (int i = 0; i < _roomboxWalls.Count; i++)
+            {
+                _roomboxWalls[i]._passthroughMesh.material.SetVector("_EffectPosition", worldPos);
+                _roomboxWalls[i]._passthroughMesh.material.SetFloat("_EffectRadius", timer * _effectRadius);
+            }
+        }
     }
 
     /// <summary>
@@ -997,5 +1049,31 @@ public class VirtualRoom : MonoBehaviour
     public bool IsFloor(int surfaceID)
     {
         return surfaceID == _roomFloorID;
+    }
+
+    /// <summary>
+    /// During the intro, apply a different material to the room
+    /// </summary>
+    public void ShowDarkRoom(bool doShow)
+    {
+        // if using the sceneMesh, this function is unnecessary
+        if (_sceneMeshCreated)
+        {
+            return;
+        }
+        if (doShow)
+        {
+            ShowAllWalls(true);
+        }
+
+        for (int i = 0; i < _roomboxFurnishings.Count; i++)
+        {
+            _roomboxFurnishings[i].ShowDarkRoomMaterial(doShow);
+        }
+
+        for (int i = 0; i < _roomboxWalls.Count; i++)
+        {
+            _roomboxWalls[i].ShowDarkRoomMaterial(doShow);
+        }
     }
 }

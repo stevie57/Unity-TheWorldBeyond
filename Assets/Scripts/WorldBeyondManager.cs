@@ -728,22 +728,29 @@ public class WorldBeyondManager : MonoBehaviour
             return;
         }
 
-        // OVRSceneAnchors have already been instantiated from OVRSceneManager
-        // to avoid script execution conflicts, we do this once in the Update loop instead of directly when the SceneModelLoaded event is fired
-        _sceneAnchors = FindObjectsOfType<OVRSceneAnchor>();
-
-        // WARNING: right now, a Scene is guaranteed to have closed walls
-        // if this ever changes, this logic needs to be revisited because the whole game fails (e.g. furniture with no walls)
-        _vrRoom.Initialize(_sceneAnchors);
-
-        // even though loading has succeeded to this point, do some sanity checks
-        if (!_vrRoom.IsPlayerInRoom())
+        try
         {
-            WorldBeyondTutorial.Instance.DisplayMessage(WorldBeyondTutorial.TutorialMessage.ERROR_USER_STARTED_OUTSIDE_OF_ROOM);
-        }
+            // OVRSceneAnchors have already been instantiated from OVRSceneManager
+            // to avoid script execution conflicts, we do this once in the Update loop instead of directly when the SceneModelLoaded event is fired
+            _sceneAnchors = FindObjectsOfType<OVRSceneAnchor>();
 
-        WorldBeyondEnvironment.Instance.Initialize();
-        ForceChapter(GameChapter.Title);
+            // WARNING: right now, a Scene is guaranteed to have closed walls
+            // if this ever changes, this logic needs to be revisited because the whole game fails (e.g. furniture with no walls)
+            _vrRoom.Initialize(_sceneAnchors);
+
+            // even though loading has succeeded to this point, do some sanity checks
+            if (!_vrRoom.IsPlayerInRoom())
+            {
+                WorldBeyondTutorial.Instance.DisplayMessage(WorldBeyondTutorial.TutorialMessage.ERROR_USER_STARTED_OUTSIDE_OF_ROOM);
+            }
+            WorldBeyondEnvironment.Instance.Initialize();
+            ForceChapter(GameChapter.Title);
+        }
+        catch
+        {
+            // if initialization messes up for some reason, quit the app
+            WorldBeyondTutorial.Instance.DisplayMessage(WorldBeyondTutorial.TutorialMessage.ERROR_NO_SCENE_DATA);
+        }
     }
 
     /// <summary>

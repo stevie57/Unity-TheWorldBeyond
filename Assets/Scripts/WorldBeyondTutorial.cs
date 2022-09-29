@@ -136,25 +136,25 @@ public class WorldBeyondTutorial : MonoBehaviour
                 _tutorialText.text = "Out of bounds. Please return to your room.";
                 break;
             case TutorialMessage.ERROR_NO_SCENE_DATA:
-                _tutorialText.text = "The World Beyond requires Scene data. Please run Room Setup in Settings > Guardian.";
+                _tutorialText.text = "The World Beyond requires Scene data. Please run Room Setup in Settings.";
                 break;
             case TutorialMessage.ERROR_NO_SCENE_DATA_LINK:
-                _tutorialText.text = "The World Beyond requires Scene data. Please disable Link, then run Room Setup in Settings > Guardian. Then enable Link and try again.";
+                _tutorialText.text = "The World Beyond requires Scene data. Please disable Link, then run Room Setup in Settings. Then enable Link and try again.";
                 break;
             case TutorialMessage.ERROR_USER_STARTED_OUTSIDE_OF_ROOM:
                 _tutorialText.text = "It appears you're outside of your room. Please enter your room and restart.";
                 break;
             case TutorialMessage.ERROR_NOT_ENOUGH_WALLS:
-                _tutorialText.text = "You haven't set up enough walls. Please run Room Setup in Settings > Guardian.";
+                _tutorialText.text = "You haven't set up enough walls. Please run Room Setup in Settings.";
                 break;
             case TutorialMessage.ERROR_TOO_MANY_WALLS:
-                _tutorialText.text = "Somehow, you have more walls than you should. Please re-create your walls in Room Setup in Settings > Guardian.";
+                _tutorialText.text = "Somehow, you have more walls than you should. Please re-create your walls in Room Setup in Settings.";
                 break;
             case TutorialMessage.ERROR_ROOM_IS_OPEN:
-                _tutorialText.text = "The World Beyond requires a closed space. Please re-create your walls in Room Setup in Settings > Guardian.";
+                _tutorialText.text = "The World Beyond requires a closed space. Please re-create your walls in Room Setup in Settings.";
                 break;
             case TutorialMessage.ERROR_INTERSECTING_WALLS:
-                _tutorialText.text = "It appears that some of your walls overlap. Please re-create your walls in Room Setup in Settings > Guardian";
+                _tutorialText.text = "It appears that some of your walls overlap. Please re-create your walls in Room Setup in Settings.";
                 break;
         }
         _currentMessage = message;

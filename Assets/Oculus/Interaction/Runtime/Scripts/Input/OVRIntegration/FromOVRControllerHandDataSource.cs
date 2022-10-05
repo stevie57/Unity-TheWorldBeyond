@@ -93,7 +93,7 @@ namespace Oculus.Interaction.Input
 
         protected override void Start()
         {
-            this.BeginStart(ref _started, base.Start);
+            this.BeginStart(ref _started, () => base.Start());
             Assert.IsNotNull(CameraRigRef);
             Assert.IsNotNull(TrackingToWorldTransformer);
             Assert.IsNotNull(HmdData);
@@ -256,7 +256,10 @@ namespace Oculus.Interaction.Input
 
             // Convert controller pose from world to tracking space.
             Pose pose = new Pose(_ovrControllerAnchor.position, _ovrControllerAnchor.rotation);
-            pose = Config.TrackingToWorldTransformer.ToTrackingPose(pose);
+            if (Config.TrackingToWorldTransformer != null)
+            {
+                pose = Config.TrackingToWorldTransformer.ToTrackingPose(pose);
+            }
 
             PoseUtils.Multiply(pose, _poseOffset, ref _handDataAsset.Root);
             _handDataAsset.RootPoseOrigin = PoseOrigin.RawTrackedPose;

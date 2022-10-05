@@ -162,7 +162,7 @@ namespace Oculus.Interaction.Input
 
         protected override void Start()
         {
-            this.BeginStart(ref _started, base.Start);
+            this.BeginStart(ref _started, () => base.Start());
             Assert.IsNotNull(CameraRigRef);
             Assert.IsNotNull(TrackingToWorldTransformer);
             Assert.IsNotNull(HmdData);

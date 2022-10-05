@@ -54,7 +54,7 @@ namespace Oculus.Interaction.Editor
                 _gripPoint = point;
                 if (_gripPoint != null)
                 {
-                    Pose offset = _controllerOffset.transform.RelativeOffset(_gripPoint);
+                    Pose offset = _controllerOffset.transform.Delta(_gripPoint);
                     _rotationProperty.quaternionValue = offset.rotation;
                     _offsetPositionProperty.vector3Value = offset.position;
                     serializedObject.ApplyModifiedProperties();

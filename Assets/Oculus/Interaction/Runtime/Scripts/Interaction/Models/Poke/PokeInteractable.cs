@@ -21,6 +21,7 @@
 using UnityEngine;
 using UnityEngine.Assertions;
 using Oculus.Interaction.Surfaces;
+using System;
 
 namespace Oculus.Interaction
 {
@@ -30,9 +31,9 @@ namespace Oculus.Interaction
         private MonoBehaviour _proximityField;
         public IProximityField ProximityField;
 
-        [SerializeField, Interface(typeof(IPointableSurface))]
+        [SerializeField, Interface(typeof(ISurface))]
         private MonoBehaviour _surface;
-        public IPointableSurface Surface;
+        public ISurface Surface;
 
         [SerializeField]
         private float _maxDistance = 0.1f;
@@ -59,16 +60,39 @@ namespace Oculus.Interaction
         private Collider _volumeMask = null;
         public Collider VolumeMask { get => _volumeMask; }
 
+        [Serializable]
+        public class PositionPinningConfig
+        {
+            public bool Enabled;
+            public float MaxPinDistance;
+        }
+
+        [SerializeField]
+        private PositionPinningConfig _positionPinning;
+
+        public PositionPinningConfig PositionPinning
+        {
+            get
+            {
+                return _positionPinning;
+            }
+
+            set
+            {
+                _positionPinning = value;
+            }
+        }
+
         protected override void Awake()
         {
             base.Awake();
             ProximityField = _proximityField as IProximityField;
-            Surface = _surface as IPointableSurface;
+            Surface = _surface as ISurface;
         }
 
         protected override void Start()
         {
-            this.BeginStart(ref _started, base.Start);
+            this.BeginStart(ref _started, () => base.Start());
             Assert.IsNotNull(ProximityField);
             Assert.IsNotNull(Surface);
             if (_enterHoverDistance > 0f)
@@ -97,14 +121,14 @@ namespace Oculus.Interaction
 
         #region Inject
 
-        public void InjectAllPokeInteractable(IPointableSurface surface,
+        public void InjectAllPokeInteractable(ISurface surface,
                                               IProximityField proximityField)
         {
             InjectSurface(surface);
             InjectProximityField(proximityField);
         }
 
-        public void InjectSurface(IPointableSurface surface)
+        public void InjectSurface(ISurface surface)
         {
             _surface = surface as MonoBehaviour;
             Surface = surface;

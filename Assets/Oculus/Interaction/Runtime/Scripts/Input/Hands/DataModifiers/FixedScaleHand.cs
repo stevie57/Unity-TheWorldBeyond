@@ -29,7 +29,7 @@ namespace Oculus.Interaction.Input
 
         protected override void Apply(HandDataAsset data)
         {
-            Pose rootToPointer = PoseUtils.RelativeOffset(data.PointerPose, data.Root);
+            Pose rootToPointer = PoseUtils.Delta(data.Root, data.PointerPose);
             rootToPointer.position = (rootToPointer.position / data.HandScale) * _scale;
             PoseUtils.Multiply(data.Root, rootToPointer, ref data.PointerPose);
 

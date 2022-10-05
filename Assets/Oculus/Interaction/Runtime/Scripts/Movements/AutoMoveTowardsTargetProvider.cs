@@ -23,7 +23,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Oculus.Interaction.HandPosing
+namespace Oculus.Interaction.HandGrab
 {
     public class AutoMoveTowardsTargetProvider : MonoBehaviour, IMovementProvider
     {
@@ -164,8 +164,8 @@ namespace Oculus.Interaction.HandPosing
             _source = pose;
             if (_tween != null && !_tween.Stopped)
             {
-                GeneratePointerEvent(PointerEvent.Hover);
-                GeneratePointerEvent(PointerEvent.Select);
+                GeneratePointerEvent(PointerEventType.Hover);
+                GeneratePointerEvent(PointerEventType.Select);
                 Aborting = true;
                 WhenAborted.Invoke(this);
             }
@@ -176,7 +176,7 @@ namespace Oculus.Interaction.HandPosing
             _tween.Tick();
             if (Aborting)
             {
-                GeneratePointerEvent(PointerEvent.Move);
+                GeneratePointerEvent(PointerEventType.Move);
                 if (_tween.Stopped)
                 {
                     AbortSelfAligment();
@@ -184,9 +184,9 @@ namespace Oculus.Interaction.HandPosing
             }
         }
 
-        private void HandlePointerEventRaised(PointerArgs args)
+        private void HandlePointerEventRaised(PointerEvent evt)
         {
-            if (args.PointerEvent == PointerEvent.Select || args.PointerEvent == PointerEvent.Unselect)
+            if (evt.Type == PointerEventType.Select || evt.Type == PointerEventType.Unselect)
             {
                 AbortSelfAligment();
             }
@@ -198,15 +198,15 @@ namespace Oculus.Interaction.HandPosing
             {
                 Aborting = false;
 
-                GeneratePointerEvent(PointerEvent.Unselect);
-                GeneratePointerEvent(PointerEvent.Unhover);
+                GeneratePointerEvent(PointerEventType.Unselect);
+                GeneratePointerEvent(PointerEventType.Unhover);
             }
         }
 
-        private void GeneratePointerEvent(PointerEvent pointerEvent)
+        private void GeneratePointerEvent(PointerEventType pointerEventType)
         {
-            PointerArgs args = new PointerArgs(Identifier, pointerEvent, Pose);
-            _pointableElement.ProcessPointerEvent(args);
+            PointerEvent evt = new PointerEvent(Identifier, pointerEventType, Pose);
+            _pointableElement.ProcessPointerEvent(evt);
         }
     }
 }

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Events;
@@ -35,6 +36,11 @@ namespace Oculus.Interaction
         private MonoBehaviour _pointable;
         private IPointable Pointable;
 
+        private HashSet<int> _pointers;
+
+        [SerializeField]
+        private UnityEvent _whenRelease;
+
         [SerializeField]
         private UnityEvent _whenHover;
         [SerializeField]
@@ -47,6 +53,8 @@ namespace Oculus.Interaction
         private UnityEvent _whenMove;
         [SerializeField]
         private UnityEvent _whenCancel;
+
+        public UnityEvent WhenRelease => _whenRelease;
 
         public UnityEvent WhenHover => _whenHover;
         public UnityEvent WhenUnhover => _whenUnhover;
@@ -66,6 +74,7 @@ namespace Oculus.Interaction
         {
             this.BeginStart(ref _started);
             Assert.IsNotNull(Pointable);
+            _pointers = new HashSet<int>();
             this.EndStart(ref _started);
         }
 
@@ -85,27 +94,34 @@ namespace Oculus.Interaction
             }
         }
 
-        private void HandlePointerEventRaised(PointerArgs args)
+        private void HandlePointerEventRaised(PointerEvent evt)
         {
-            switch (args.PointerEvent)
+            switch (evt.Type)
             {
-                case PointerEvent.Hover:
+                case PointerEventType.Hover:
                     _whenHover.Invoke();
+                    _pointers.Add(evt.Identifier);
                     break;
-                case PointerEvent.Unhover:
+                case PointerEventType.Unhover:
                     _whenUnhover.Invoke();
+                    _pointers.Remove(evt.Identifier);
                     break;
-                case PointerEvent.Select:
+                case PointerEventType.Select:
                     _whenSelect.Invoke();
                     break;
-                case PointerEvent.Unselect:
+                case PointerEventType.Unselect:
+                    if (_pointers.Contains(evt.Identifier))
+                    {
+                        _whenRelease.Invoke();
+                    }
                     _whenUnselect.Invoke();
                     break;
-                case PointerEvent.Move:
+                case PointerEventType.Move:
                     _whenMove.Invoke();
                     break;
-                case PointerEvent.Cancel:
+                case PointerEventType.Cancel:
                     _whenCancel.Invoke();
+                    _pointers.Remove(evt.Identifier);
                     break;
             }
         }

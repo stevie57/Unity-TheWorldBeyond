@@ -19,6 +19,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Oculus.Interaction
 {
@@ -40,11 +41,13 @@ namespace Oculus.Interaction
         int MaxInteractors { get; }
         int MaxSelectingInteractors { get; }
 
-        int InteractorsCount { get; }
-        int SelectingInteractorsCount { get; }
+        IEnumerable<IInteractorView> InteractorViews { get; }
+        IEnumerable<IInteractorView> SelectingInteractorViews { get; }
 
-        event Action WhenInteractorsCountUpdated;
-        event Action WhenSelectingInteractorsCountUpdated;
+        event Action<IInteractorView> WhenInteractorViewAdded;
+        event Action<IInteractorView> WhenInteractorViewRemoved;
+        event Action<IInteractorView> WhenSelectingInteractorViewAdded;
+        event Action<IInteractorView> WhenSelectingInteractorViewRemoved;
     }
 
     /// <summary>
@@ -57,5 +60,6 @@ namespace Oculus.Interaction
         void Disable();
         new int MaxInteractors { get; set; }
         new int MaxSelectingInteractors { get; set; }
+        void RemoveInteractorByIdentifier(int id);
     }
 }

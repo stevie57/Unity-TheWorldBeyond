@@ -26,7 +26,7 @@ namespace Oculus.Interaction
                                     where TInteractor : Interactor<TInteractor, TInteractable>
                                     where TInteractable : PointerInteractable<TInteractor, TInteractable>
     {
-        protected void GeneratePointerEvent(PointerEvent pointerEvent, TInteractable interactable)
+        protected void GeneratePointerEvent(PointerEventType pointerEventType, TInteractable interactable)
         {
             Pose pose = ComputePointerPose();
 
@@ -37,29 +37,29 @@ namespace Oculus.Interaction
 
             if (interactable.PointableElement != null)
             {
-                if (pointerEvent == PointerEvent.Hover)
+                if (pointerEventType == PointerEventType.Hover)
                 {
                     interactable.PointableElement.WhenPointerEventRaised +=
                         HandlePointerEventRaised;
                 }
-                else if (pointerEvent == PointerEvent.Unhover)
+                else if (pointerEventType == PointerEventType.Unhover)
                 {
                     interactable.PointableElement.WhenPointerEventRaised -=
                         HandlePointerEventRaised;
                 }
             }
 
-            interactable.PublishPointerEvent(new PointerArgs(Identifier, pointerEvent, pose));
+            interactable.PublishPointerEvent(new PointerEvent(Identifier, pointerEventType, pose));
         }
 
-        protected virtual void HandlePointerEventRaised(PointerArgs args)
+        protected virtual void HandlePointerEventRaised(PointerEvent evt)
         {
-            if (args.Identifier == Identifier &&
-                args.PointerEvent == PointerEvent.Cancel &&
+            if (evt.Identifier == Identifier &&
+                evt.Type == PointerEventType.Cancel &&
                 Interactable != null)
             {
                 TInteractable interactable = Interactable;
-                interactable.RemoveInteractorById(Identifier);
+                interactable.RemoveInteractorByIdentifier(Identifier);
                 interactable.PointableElement.WhenPointerEventRaised -=
                     HandlePointerEventRaised;
             }
@@ -68,24 +68,24 @@ namespace Oculus.Interaction
         protected override void InteractableSet(TInteractable interactable)
         {
             base.InteractableSet(interactable);
-            GeneratePointerEvent(PointerEvent.Hover, interactable);
+            GeneratePointerEvent(PointerEventType.Hover, interactable);
         }
 
         protected override void InteractableUnset(TInteractable interactable)
         {
-            GeneratePointerEvent(PointerEvent.Unhover, interactable);
+            GeneratePointerEvent(PointerEventType.Unhover, interactable);
             base.InteractableUnset(interactable);
         }
 
         protected override void InteractableSelected(TInteractable interactable)
         {
             base.InteractableSelected(interactable);
-            GeneratePointerEvent(PointerEvent.Select, interactable);
+            GeneratePointerEvent(PointerEventType.Select, interactable);
         }
 
         protected override void InteractableUnselected(TInteractable interactable)
         {
-            GeneratePointerEvent(PointerEvent.Unselect, interactable);
+            GeneratePointerEvent(PointerEventType.Unselect, interactable);
             base.InteractableUnselected(interactable);
         }
 
@@ -94,7 +94,7 @@ namespace Oculus.Interaction
             base.DoPostprocess();
             if (_interactable != null)
             {
-                GeneratePointerEvent(PointerEvent.Move, _interactable);
+                GeneratePointerEvent(PointerEventType.Move, _interactable);
             }
         }
 

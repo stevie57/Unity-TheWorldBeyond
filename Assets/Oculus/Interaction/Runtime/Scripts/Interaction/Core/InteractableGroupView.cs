@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -33,6 +34,7 @@ namespace Oculus.Interaction
     {
         [SerializeField, Interface(typeof(IInteractable))]
         private List<MonoBehaviour> _interactables;
+
         private List<IInteractable> Interactables;
 
         public int InteractorsCount
@@ -42,7 +44,7 @@ namespace Oculus.Interaction
                 int count = 0;
                 foreach (IInteractable interactable in Interactables)
                 {
-                    count += interactable.InteractorsCount;
+                    count += interactable.InteractorViews.Count();
                 }
 
                 return count;
@@ -56,12 +58,23 @@ namespace Oculus.Interaction
                 int count = 0;
                 foreach (IInteractable interactable in Interactables)
                 {
-                    count += interactable.SelectingInteractorsCount;
+                    count += interactable.SelectingInteractorViews.Count();
                 }
 
                 return count;
             }
         }
+
+        public IEnumerable<IInteractorView> InteractorViews =>
+            Interactables.SelectMany(interactable => interactable.InteractorViews).ToList();
+
+        public IEnumerable<IInteractorView> SelectingInteractorViews =>
+            Interactables.SelectMany(interactable => interactable.SelectingInteractorViews).ToList();
+
+        public event Action<IInteractorView> WhenInteractorViewAdded = delegate { };
+        public event Action<IInteractorView> WhenInteractorViewRemoved = delegate { };
+        public event Action<IInteractorView> WhenSelectingInteractorViewAdded = delegate { };
+        public event Action<IInteractorView> WhenSelectingInteractorViewRemoved = delegate { };
 
         public int MaxInteractors
         {
@@ -90,9 +103,6 @@ namespace Oculus.Interaction
                 return max;
             }
         }
-
-        public event Action WhenInteractorsCountUpdated = delegate { };
-        public event Action WhenSelectingInteractorsCountUpdated = delegate { };
 
         public event Action<InteractableStateChangeArgs> WhenStateChanged = delegate { };
 
@@ -151,6 +161,10 @@ namespace Oculus.Interaction
                 foreach (IInteractable interactable in Interactables)
                 {
                     interactable.WhenStateChanged += HandleStateChange;
+                    interactable.WhenInteractorViewAdded += WhenInteractorViewAdded;
+                    interactable.WhenInteractorViewRemoved += WhenInteractorViewRemoved;
+                    interactable.WhenSelectingInteractorViewAdded += WhenSelectingInteractorViewAdded;
+                    interactable.WhenSelectingInteractorViewRemoved += WhenSelectingInteractorViewRemoved;
                 }
             }
         }
@@ -162,6 +176,11 @@ namespace Oculus.Interaction
                 foreach (IInteractable interactable in Interactables)
                 {
                     interactable.WhenStateChanged -= HandleStateChange;
+                    interactable.WhenStateChanged -= HandleStateChange;
+                    interactable.WhenInteractorViewAdded -= WhenInteractorViewAdded;
+                    interactable.WhenInteractorViewRemoved -= WhenInteractorViewRemoved;
+                    interactable.WhenSelectingInteractorViewAdded -= WhenSelectingInteractorViewAdded;
+                    interactable.WhenSelectingInteractorViewRemoved -= WhenSelectingInteractorViewRemoved;
                 }
             }
         }

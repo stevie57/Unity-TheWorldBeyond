@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
@@ -20,7 +20,7 @@
 
 using UnityEngine;
 
-namespace Oculus.Interaction.HandPosing
+namespace Oculus.Interaction.HandGrab
 {
     public class MoveAtSourceProvider : MonoBehaviour, IMovementProvider
     {
@@ -46,7 +46,7 @@ namespace Oculus.Interaction.HandPosing
 
         public void UpdateTarget(Pose target)
         {
-            Pose grabberDelta = PoseUtils.RelativeOffset(target, _originalTarget);
+            Pose grabberDelta = PoseUtils.Delta(_originalTarget, target);
             PoseUtils.Multiply(_originalSource, grabberDelta, ref _current);
         }
 

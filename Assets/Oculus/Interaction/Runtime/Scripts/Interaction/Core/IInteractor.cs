@@ -36,7 +36,7 @@ namespace Oculus.Interaction
         int Identifier { get; }
 
         bool HasCandidate { get; }
-        object Candidate { get; }
+        object CandidateProperties { get; }
 
         bool HasInteractable { get; }
         bool HasSelectedInteractable { get; }
@@ -44,19 +44,28 @@ namespace Oculus.Interaction
         InteractorState State { get; }
         event Action<InteractorStateChangeArgs> WhenStateChanged;
         event Action WhenPreprocessed;
+        event Action WhenProcessed;
         event Action WhenPostprocessed;
+    }
+
+    public interface IUpdateDriver
+    {
+        bool IsRootDriver { get; set; }
+        void Drive();
     }
 
     /// <summary>
     /// IInteractor defines an object that can interact with other objects
     /// and can handle selection events to change its state.
     /// </summary>
-    public interface IInteractor : IInteractorView
+    public interface IInteractor : IInteractorView, IUpdateDriver
     {
 
         void Preprocess();
+        void Process();
         void Postprocess();
-        void UpdateCandidate();
+
+        void ProcessCandidate();
         void Enable();
         void Disable();
         void Hover();
@@ -68,7 +77,5 @@ namespace Oculus.Interaction
         bool ShouldUnhover { get; }
         bool ShouldSelect { get; }
         bool ShouldUnselect { get; }
-
-        bool IsRootDriver { get; set; }
     }
 }

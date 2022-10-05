@@ -42,12 +42,7 @@ namespace Oculus.Interaction
         [SerializeField]
         private SyntheticHand _syntheticHand;
 
-        [SerializeField]
-        private float _maxDistanceFromTouchPoint = 0.1f;
-
         private bool _isTouching;
-        private Vector3 _initialTouchPoint;
-        private float _maxDeltaFromTouchPoint;
 
         protected bool _started = false;
 
@@ -96,18 +91,12 @@ namespace Oculus.Interaction
         private void HandleLock(PokeInteractable pokeInteractable)
         {
             _isTouching = true;
-            _initialTouchPoint = _pokeInteractor.TouchPoint;
         }
 
         private void HandleUnlock(PokeInteractable pokeInteractable)
         {
             _syntheticHand.FreeWrist();
             _isTouching = false;
-        }
-
-        private Vector3 ComputeSurfacePosition(Vector3 point, PokeInteractable interactable)
-        {
-            return interactable.ClosestSurfacePoint(point);
         }
 
         private void UpdateWrist()
@@ -119,17 +108,8 @@ namespace Oculus.Interaction
                 return;
             }
 
-            Vector3 surfacePosition = ComputeSurfacePosition(_pokeInteractor.Origin, _pokeInteractor.SelectedInteractable);
-            _maxDeltaFromTouchPoint = Mathf.Max((surfacePosition - _initialTouchPoint).magnitude, _maxDeltaFromTouchPoint);
-
-            float deltaAsPercent =
-                Mathf.Clamp01(_maxDeltaFromTouchPoint / _maxDistanceFromTouchPoint);
-
-            Vector3 fullDelta = surfacePosition - _initialTouchPoint;
-            Vector3 easedPosition = _initialTouchPoint + fullDelta * deltaAsPercent;
-
             Vector3 positionDelta = rootPose.position - _pokeInteractor.Origin;
-            Vector3 targetPosePosition = easedPosition + positionDelta;
+            Vector3 targetPosePosition = _pokeInteractor.TouchPoint + positionDelta;
             Pose wristPoseOverride = new Pose(targetPosePosition, rootPose.rotation);
 
             _syntheticHand.LockWristPose(wristPoseOverride, 1.0f, SyntheticHand.WristLockMode.Full, true, true);

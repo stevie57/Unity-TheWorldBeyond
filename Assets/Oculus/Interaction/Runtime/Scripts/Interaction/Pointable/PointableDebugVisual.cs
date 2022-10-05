@@ -122,25 +122,25 @@ namespace Oculus.Interaction
             Destroy(_material);
         }
 
-        private void HandlePointerEventRaised(PointerArgs args)
+        private void HandlePointerEventRaised(PointerEvent evt)
         {
-            switch (args.PointerEvent)
+            switch (evt.Type)
             {
-                case PointerEvent.Hover:
+                case PointerEventType.Hover:
                     _hover = true;
                     UpdateMaterialColor();
                     break;
-                case PointerEvent.Select:
+                case PointerEventType.Select:
                     _select = true;
                     UpdateMaterialColor();
                     break;
-                case PointerEvent.Move:
+                case PointerEventType.Move:
                     break;
-                case PointerEvent.Unselect:
+                case PointerEventType.Unselect:
                     _select = false;
                     UpdateMaterialColor();
                     break;
-                case PointerEvent.Unhover:
+                case PointerEventType.Unhover:
                     _hover = false;
                     UpdateMaterialColor();
                     break;

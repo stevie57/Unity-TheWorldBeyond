@@ -19,10 +19,10 @@
  */
 
 using Oculus.Interaction.Input;
-using System.Linq;
+using System;
 using UnityEngine;
 
-namespace Oculus.Interaction.HandPosing
+namespace Oculus.Interaction.HandGrab
 {
     /// <summary>
     /// Data for the pose of a hand for grabbing an object.
@@ -35,7 +35,7 @@ namespace Oculus.Interaction.HandPosing
     /// (in conjunction with the HandGrabInteractableEditor class)
     /// to edit the values in the inspector.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class HandPose
     {
         [SerializeField]
@@ -98,7 +98,8 @@ namespace Oculus.Interaction.HandPosing
         public HandPose()
         {
 #if UNITY_EDITOR
-            var jointCollection = HandSkeletonOVR.CreateSkeletonData(_handedness).Joints;
+            IReadOnlyHandSkeletonJointList jointCollection = _handedness == Handedness.Left ?
+                HandSkeleton.DefaultLeftSkeleton : HandSkeleton.DefaultRightSkeleton;
             int offset = (int)FingersMetadata.HAND_JOINT_IDS[0];
             for (int i = 0; i < FingersMetadata.HAND_JOINT_IDS.Length; i++)
             {
@@ -131,24 +132,13 @@ namespace Oculus.Interaction.HandPosing
         /// <param name="mirrorHandedness">Invert the received handedness</param>
         public void CopyFrom(HandPose from, bool mirrorHandedness = false)
         {
-            if (mirrorHandedness)
-            {
-
-            }
-            else
+            if (!mirrorHandedness)
             {
                 _handedness = from.Handedness;
             }
 
-            for (int i = 0; i < Constants.NUM_FINGERS; i++)
-            {
-                FingersFreedom[i] = from.FingersFreedom[i];
-            }
-
-            for (int i = 0; i < FingersMetadata.HAND_JOINT_IDS.Length; i++)
-            {
-                JointRotations[i] = from.JointRotations[i];
-            }
+            Array.Copy(from.FingersFreedom, FingersFreedom, Constants.NUM_FINGERS);
+            Array.Copy(from.JointRotations, JointRotations, FingersMetadata.HAND_JOINT_IDS.Length);
         }
 
         /// <summary>

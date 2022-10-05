@@ -57,6 +57,7 @@ namespace Oculus.Interaction.PoseDetection.Editor
             var relativeTo = property.FindPropertyRelative("_relativeTo");
             var handAxis = property.FindPropertyRelative("_handAxis");
             var worldAxis = property.FindPropertyRelative("_worldAxis");
+            var headAxis = property.FindPropertyRelative("_headAxis");
 
             DrawControl(joint, "Joint", ref pos);
             DrawControl(relativeTo, "Relative To", ref pos);
@@ -66,9 +67,15 @@ namespace Oculus.Interaction.PoseDetection.Editor
             {
                 DrawControl(handAxis, "Hand Axis", ref pos);
             }
-            else
+            else if ((JointVelocityActiveState.RelativeTo)relativeTo.enumValueIndex ==
+                     JointVelocityActiveState.RelativeTo.World)
             {
                 DrawControl(worldAxis, "World Axis", ref pos);
+            }
+            else if ((JointVelocityActiveState.RelativeTo)relativeTo.enumValueIndex ==
+                     JointVelocityActiveState.RelativeTo.Head)
+            {
+                DrawControl(headAxis, "Head Axis", ref pos);
             }
 
             EditorGUI.EndProperty();

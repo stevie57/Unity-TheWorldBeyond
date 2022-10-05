@@ -30,12 +30,10 @@ namespace Oculus.Interaction
                                      where TInteractable : Interactable<TInteractor, TInteractable>
     {
         private static List<TInteractable> _interactables;
-        private List<TInteractable> _interactableEnumeratorList;
 
         public InteractableRegistry()
         {
             _interactables = new List<TInteractable>();
-            _interactableEnumeratorList = new List<TInteractable>();
         }
 
         public virtual void Register(TInteractable interactable) => _interactables.Add(interactable);
@@ -44,10 +42,9 @@ namespace Oculus.Interaction
         protected IEnumerable<TInteractable> PruneInteractables(IEnumerable<TInteractable> interactables,
                                                             TInteractor interactor)
         {
-            int interactableCount = 0;
             foreach (TInteractable interactable in interactables)
             {
-                if (!interactor.IsFilterPassedBy(interactable))
+                if (!interactor.CanSelect(interactable))
                 {
                     continue;
                 }
@@ -57,18 +54,8 @@ namespace Oculus.Interaction
                     continue;
                 }
 
-                if (interactableCount == _interactableEnumeratorList.Count)
-                {
-                    _interactableEnumeratorList.Add(interactable);
-                }
-                else
-                {
-                    _interactableEnumeratorList[interactableCount] = interactable;
-                }
-                interactableCount++;
+                yield return interactable;
             }
-
-            return GetRange(_interactableEnumeratorList, 0, interactableCount);
         }
 
         public virtual IEnumerable<TInteractable> List(TInteractor interactor)

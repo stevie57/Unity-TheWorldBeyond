@@ -23,7 +23,7 @@ using UnityEngine;
 
 namespace Oculus.Interaction
 {
-    public enum PointerEvent
+    public enum PointerEventType
     {
         Hover,
         Unhover,
@@ -33,27 +33,27 @@ namespace Oculus.Interaction
         Cancel
     }
 
-    public struct PointerArgs
+    public struct PointerEvent
     {
         public int Identifier { get; }
-        public PointerEvent PointerEvent { get; }
+        public PointerEventType Type { get; }
         public Pose Pose { get; }
 
-        public PointerArgs(int identifier, PointerEvent pointerEvent, Pose pose)
+        public PointerEvent(int identifier, PointerEventType type, Pose pose)
         {
             this.Identifier = identifier;
-            this.PointerEvent = pointerEvent;
+            this.Type = type;
             this.Pose = pose;
         }
     }
 
     public interface IPointable
     {
-        event Action<PointerArgs> WhenPointerEventRaised;
+        event Action<PointerEvent> WhenPointerEventRaised;
     }
 
     public interface IPointableElement : IPointable
     {
-        void ProcessPointerEvent(PointerArgs args);
+        void ProcessPointerEvent(PointerEvent evt);
     }
 }

@@ -109,6 +109,21 @@ namespace Oculus.Interaction.Grab
             return handGrabScore;
         }
 
+        public static bool CouldSelect(IHandGrabber grabber, IHandGrabbable grabbable,
+            out GrabTypeFlags handGrabTypes)
+        {
+            handGrabTypes = GrabTypeFlags.None;
+            if (SupportsPinch(grabber, grabbable))
+            {
+                handGrabTypes |= GrabTypeFlags.Pinch;
+            }
+            if (SupportsPalm(grabber, grabbable))
+            {
+                handGrabTypes |= GrabTypeFlags.Palm;
+            }
+            return handGrabTypes != GrabTypeFlags.None;
+        }
+
         public static bool ComputeShouldSelect(IHandGrabber grabber,
             IHandGrabbable grabbable, out GrabTypeFlags selectingGrabTypes)
         {

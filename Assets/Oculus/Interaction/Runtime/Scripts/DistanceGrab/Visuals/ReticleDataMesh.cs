@@ -38,12 +38,11 @@ namespace Oculus.Interaction.DistanceReticles
             }
         }
 
-        public Transform Target => this.transform;
+        public Transform Target => _filter.transform;
 
-
-        public Vector3 GetTargetHit(ConicalFrustum frustum)
+        public Vector3 BestHitPoint(Ray ray)
         {
-            Vector3 bestPoint = Target.position;
+            Vector3 bestPoint = _filter.transform.position;
             return bestPoint;
         }
     }

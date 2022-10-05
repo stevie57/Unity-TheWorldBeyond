@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
@@ -42,11 +42,14 @@ namespace Oculus.Interaction
         private UnityEvent _whenSelect;
         [SerializeField]
         private UnityEvent _whenUnselect;
-
         [SerializeField]
-        private UnityEvent _whenInteractorsCountUpdated;
+        private UnityEvent _whenInteractorViewAdded;
         [SerializeField]
-        private UnityEvent _whenSelectingInteractorsCountUpdated;
+        private UnityEvent _whenInteractorViewRemoved;
+        [SerializeField]
+        private UnityEvent _whenSelectingInteractorViewAdded;
+        [SerializeField]
+        private UnityEvent _whenSelectingInteractorViewRemoved;
 
         #region Properties
 
@@ -54,8 +57,10 @@ namespace Oculus.Interaction
         public UnityEvent WhenUnhover => _whenUnhover;
         public UnityEvent WhenSelect => _whenSelect;
         public UnityEvent WhenUnselect => _whenUnselect;
-        public UnityEvent WhenInteractorsCountUpdated => _whenInteractorsCountUpdated;
-        public UnityEvent WhenSelectingInteractorsCountUpdated => _whenSelectingInteractorsCountUpdated;
+        public UnityEvent WhenInteractorViewAdded => _whenInteractorViewAdded;
+        public UnityEvent WhenInteractorViewRemoved => _whenInteractorViewRemoved;
+        public UnityEvent WhenSelectingInteractorViewAdded => _whenSelectingInteractorViewAdded;
+        public UnityEvent WhenSelectingInteractorViewRemoved => _whenSelectingInteractorViewRemoved;
 
         #endregion
 
@@ -78,8 +83,10 @@ namespace Oculus.Interaction
             if (_started)
             {
                 InteractableView.WhenStateChanged += HandleStateChanged;
-                InteractableView.WhenInteractorsCountUpdated += HandleInteractorsCountUpdated;
-                InteractableView.WhenSelectingInteractorsCountUpdated += HandleSelectingInteractorsCountUpdated;
+                InteractableView.WhenInteractorViewAdded += HandleInteractorViewAdded;
+                InteractableView.WhenInteractorViewRemoved += HandleInteractorViewRemoved;
+                InteractableView.WhenSelectingInteractorViewAdded += HandleSelectingInteractorViewAdded;
+                InteractableView.WhenSelectingInteractorViewRemoved += HandleSelectingInteractorViewRemoved;
             }
         }
 
@@ -88,8 +95,11 @@ namespace Oculus.Interaction
             if (_started)
             {
                 InteractableView.WhenStateChanged -= HandleStateChanged;
-                InteractableView.WhenInteractorsCountUpdated -= HandleInteractorsCountUpdated;
-                InteractableView.WhenSelectingInteractorsCountUpdated -= HandleSelectingInteractorsCountUpdated;
+                InteractableView.WhenStateChanged -= HandleStateChanged;
+                InteractableView.WhenInteractorViewAdded -= HandleInteractorViewAdded;
+                InteractableView.WhenInteractorViewRemoved -= HandleInteractorViewRemoved;
+                InteractableView.WhenSelectingInteractorViewAdded -= HandleSelectingInteractorViewAdded;
+                InteractableView.WhenSelectingInteractorViewRemoved -= HandleSelectingInteractorViewRemoved;
             }
         }
 
@@ -125,14 +135,24 @@ namespace Oculus.Interaction
             }
         }
 
-        private void HandleInteractorsCountUpdated()
+        private void HandleInteractorViewAdded(IInteractorView interactorView)
         {
-            _whenInteractorsCountUpdated.Invoke();
+            WhenInteractorViewAdded.Invoke();
         }
 
-        private void HandleSelectingInteractorsCountUpdated()
+        private void HandleInteractorViewRemoved(IInteractorView interactorView)
         {
-            _whenSelectingInteractorsCountUpdated.Invoke();
+            WhenInteractorViewRemoved.Invoke();
+        }
+
+        private void HandleSelectingInteractorViewAdded(IInteractorView interactorView)
+        {
+            WhenSelectingInteractorViewAdded.Invoke();
+        }
+
+        private void HandleSelectingInteractorViewRemoved(IInteractorView interactorView)
+        {
+            WhenSelectingInteractorViewRemoved.Invoke();
         }
 
         #region Inject

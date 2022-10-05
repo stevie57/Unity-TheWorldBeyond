@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
@@ -24,9 +24,12 @@ namespace Oculus.Interaction.DistanceReticles
 {
     public class ReticleDataGhost : MonoBehaviour, IReticleData
     {
-        public Transform Target => this.transform;
+        [SerializeField, Optional]
+        private Transform _targetPoint;
 
-        public Vector3 GetTargetHit(ConicalFrustum frustum)
+        public Transform Target => _targetPoint != null ? _targetPoint : this.transform;
+
+        public Vector3 BestHitPoint(Ray ray)
         {
             return Target.position;
         }

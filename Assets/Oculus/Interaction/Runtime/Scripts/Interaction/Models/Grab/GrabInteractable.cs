@@ -99,7 +99,7 @@ namespace Oculus.Interaction
 
         protected override void Start()
         {
-            this.BeginStart(ref _started, base.Start);
+            this.BeginStart(ref _started, () => base.Start());
             Assert.IsNotNull(Rigidbody);
             _colliders = Rigidbody.GetComponentsInChildren<Collider>();
             Assert.IsTrue(Colliders.Length > 0,

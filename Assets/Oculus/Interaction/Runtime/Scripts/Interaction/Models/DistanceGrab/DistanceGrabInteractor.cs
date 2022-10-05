@@ -25,6 +25,11 @@ using Oculus.Interaction.Throw;
 
 namespace Oculus.Interaction
 {
+    /// <summary>
+    /// This interactor allows grabbing objects at a distance.
+    /// It uses a series of conical frustums to find the best interactable.
+    /// Upon selection the object will move with the hand following the interactable movement.
+    /// </summary>
     public class DistanceGrabInteractor : PointerInteractor<DistanceGrabInteractor, DistanceGrabInteractable>,
         IDistanceInteractor
     {
@@ -42,7 +47,15 @@ namespace Oculus.Interaction
 
         private IMovement _movement;
 
-        public ConicalFrustum PointerFrustum => _selectionFrustum;
+        public Ray Pointer
+        {
+            get
+            {
+                return new Ray(_selectionFrustum.StartPoint,
+                    _selectionFrustum.Direction);
+            }
+        }
+        public IDistanceInteractable DistanceInteractable => this.Interactable;
 
         public float BestInteractableWeight { get; private set; } = float.MaxValue;
 
@@ -59,9 +72,9 @@ namespace Oculus.Interaction
 
         protected override void Start()
         {
-            this.BeginStart(ref _started, base.Start);
-            Assert.IsNotNull(Selector);
-            Assert.IsNotNull(_selectionFrustum);
+            this.BeginStart(ref _started, () => base.Start());
+            Assert.IsNotNull(Selector, "The selector is missing");
+            Assert.IsNotNull(_selectionFrustum, "The selection frustum is missing");
 
             if (_grabCenter == null)
             {
@@ -75,7 +88,7 @@ namespace Oculus.Interaction
 
             if (_velocityCalculator != null)
             {
-                Assert.IsNotNull(VelocityCalculator);
+                Assert.IsNotNull(VelocityCalculator, "Velocity Calculator was not the right type");
             }
             this.EndStart(ref _started);
         }
@@ -112,8 +125,7 @@ namespace Oculus.Interaction
 
         protected override void InteractableSelected(DistanceGrabInteractable interactable)
         {
-            Pose target = _grabTarget.GetPose();
-            _movement = interactable.GenerateAligner(_grabTarget.GetPose());
+            _movement = interactable.GenerateMovement(_grabTarget.GetPose());
             base.InteractableSelected(interactable);
             interactable.WhenPointerEventRaised += HandleOtherPointerEventRaised;
         }
@@ -131,25 +143,25 @@ namespace Oculus.Interaction
             interactable.ApplyVelocities(throwVelocity.LinearVelocity, throwVelocity.AngularVelocity);
         }
 
-        private void HandleOtherPointerEventRaised(PointerArgs args)
+        private void HandleOtherPointerEventRaised(PointerEvent evt)
         {
             if (SelectedInteractable == null)
             {
                 return;
             }
 
-            if (args.PointerEvent == PointerEvent.Select || args.PointerEvent == PointerEvent.Unselect)
+            if (evt.Type == PointerEventType.Select || evt.Type == PointerEventType.Unselect)
             {
                 Pose toPose = _grabTarget.GetPose();
                 if (SelectedInteractable.ResetGrabOnGrabsUpdated)
                 {
-                    _movement = SelectedInteractable.GenerateAligner(toPose);
+                    _movement = SelectedInteractable.GenerateMovement(toPose);
                     SelectedInteractable.PointableElement.ProcessPointerEvent(
-                        new PointerArgs(Identifier, PointerEvent.Move, _movement.Pose));
+                        new PointerEvent(Identifier, PointerEventType.Move, _movement.Pose));
                 }
             }
 
-            if (args.Identifier == Identifier && args.PointerEvent == PointerEvent.Cancel)
+            if (evt.Identifier == Identifier && evt.Type == PointerEventType.Cancel)
             {
                 SelectedInteractable.WhenPointerEventRaised -= HandleOtherPointerEventRaised;
             }
@@ -177,7 +189,7 @@ namespace Oculus.Interaction
         }
 
         #region Inject
-        public void InjectAllGrabInteractor(ISelector selector, ConicalFrustum selectionFrustum)
+        public void InjectAllDistanceGrabInteractor(ISelector selector, ConicalFrustum selectionFrustum)
         {
             InjectSelector(selector);
             InjectSelectionFrustum(selectionFrustum);

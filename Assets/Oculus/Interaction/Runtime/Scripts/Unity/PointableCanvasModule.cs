@@ -85,19 +85,19 @@ namespace Oculus.Interaction
         private Dictionary<int, Pointer> _pointerMap = new Dictionary<int, Pointer>();
         private List<RaycastResult> _raycastResultCache = new List<RaycastResult>();
         private List<Pointer> _pointersForDeletion = new List<Pointer>();
-        private Dictionary<IPointableCanvas, Action<PointerArgs>> _pointerCanvasActionMap =
-            new Dictionary<IPointableCanvas, Action<PointerArgs>>();
+        private Dictionary<IPointableCanvas, Action<PointerEvent>> _pointerCanvasActionMap =
+            new Dictionary<IPointableCanvas, Action<PointerEvent>>();
 
         private void AddPointerCanvas(IPointableCanvas pointerCanvas)
         {
-            Action<PointerArgs> pointerCanvasAction = (args) => HandlePointerEvent(pointerCanvas.Canvas, args);
+            Action<PointerEvent> pointerCanvasAction = (args) => HandlePointerEvent(pointerCanvas.Canvas, args);
             _pointerCanvasActionMap.Add(pointerCanvas, pointerCanvasAction);
             pointerCanvas.WhenPointerEventRaised += pointerCanvasAction;
         }
 
         private void RemovePointerCanvas(IPointableCanvas pointerCanvas)
         {
-            Action<PointerArgs> pointerCanvasAction = _pointerCanvasActionMap[pointerCanvas];
+            Action<PointerEvent> pointerCanvasAction = _pointerCanvasActionMap[pointerCanvas];
             _pointerCanvasActionMap.Remove(pointerCanvas);
             pointerCanvas.WhenPointerEventRaised -= pointerCanvasAction;
 
@@ -116,41 +116,41 @@ namespace Oculus.Interaction
             }
         }
 
-        private void HandlePointerEvent(Canvas canvas, PointerArgs args)
+        private void HandlePointerEvent(Canvas canvas, PointerEvent evt)
         {
             Pointer pointer;
 
-            switch (args.PointerEvent)
+            switch (evt.Type)
             {
-                case PointerEvent.Hover:
+                case PointerEventType.Hover:
                     pointer = new Pointer(canvas);
                     pointer.PointerEventData = new PointerEventData(eventSystem);
-                    pointer.SetPosition(args.Pose.position);
-                    _pointerMap.Add(args.Identifier, pointer);
+                    pointer.SetPosition(evt.Pose.position);
+                    _pointerMap.Add(evt.Identifier, pointer);
                     break;
-                case PointerEvent.Unhover:
-                    pointer = _pointerMap[args.Identifier];
-                    _pointerMap.Remove(args.Identifier);
+                case PointerEventType.Unhover:
+                    pointer = _pointerMap[evt.Identifier];
+                    _pointerMap.Remove(evt.Identifier);
                     pointer.MarkForDeletion();
                     _pointersForDeletion.Add(pointer);
                     break;
-                case PointerEvent.Select:
-                    pointer = _pointerMap[args.Identifier];
-                    pointer.SetPosition(args.Pose.position);
+                case PointerEventType.Select:
+                    pointer = _pointerMap[evt.Identifier];
+                    pointer.SetPosition(evt.Pose.position);
                     pointer.Press();
                     break;
-                case PointerEvent.Unselect:
-                    pointer = _pointerMap[args.Identifier];
-                    pointer.SetPosition(args.Pose.position);
+                case PointerEventType.Unselect:
+                    pointer = _pointerMap[evt.Identifier];
+                    pointer.SetPosition(evt.Pose.position);
                     pointer.Release();
                     break;
-                case PointerEvent.Move:
-                    pointer = _pointerMap[args.Identifier];
-                    pointer.SetPosition(args.Pose.position);
+                case PointerEventType.Move:
+                    pointer = _pointerMap[evt.Identifier];
+                    pointer.SetPosition(evt.Pose.position);
                     break;
-                case PointerEvent.Cancel:
-                    pointer = _pointerMap[args.Identifier];
-                    _pointerMap.Remove(args.Identifier);
+                case PointerEventType.Cancel:
+                    pointer = _pointerMap[evt.Identifier];
+                    _pointerMap.Remove(evt.Identifier);
                     ClearPointerSelection(pointer.PointerEventData);
                     pointer.MarkForDeletion();
                     _pointersForDeletion.Add(pointer);
@@ -229,7 +229,7 @@ namespace Oculus.Interaction
 
         protected override void Start()
         {
-            this.BeginStart(ref _started, base.Start);
+            this.BeginStart(ref _started, () => base.Start());
             this.EndStart(ref _started);
         }
 

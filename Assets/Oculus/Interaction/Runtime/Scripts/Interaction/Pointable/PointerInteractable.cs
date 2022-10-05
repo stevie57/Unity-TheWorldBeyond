@@ -34,26 +34,27 @@ namespace Oculus.Interaction
 
         public IPointableElement PointableElement { get; private set; }
 
-        public event Action<PointerArgs> WhenPointerEventRaised = delegate { };
+        public event Action<PointerEvent> WhenPointerEventRaised = delegate { };
 
         protected bool _started = false;
 
-        public void PublishPointerEvent(PointerArgs args)
+        public void PublishPointerEvent(PointerEvent evt)
         {
-            WhenPointerEventRaised(args);
+            WhenPointerEventRaised(evt);
         }
 
-        protected virtual void Awake()
+        protected override void Awake()
         {
+            base.Awake();
             if (_pointableElement != null)
             {
                 PointableElement = _pointableElement as IPointableElement;
             }
         }
 
-        protected virtual void Start()
+        protected override void Start()
         {
-            this.BeginStart(ref _started);
+            this.BeginStart(ref _started, () => base.Start());
             if (_pointableElement != null)
             {
                 Assert.IsNotNull(PointableElement);

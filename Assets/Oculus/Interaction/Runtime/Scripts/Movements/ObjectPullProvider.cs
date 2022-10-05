@@ -20,7 +20,7 @@
 
 using UnityEngine;
 
-namespace Oculus.Interaction.HandPosing
+namespace Oculus.Interaction.HandGrab
 {
     public class ObjectPullProvider : MonoBehaviour, IMovementProvider
     {

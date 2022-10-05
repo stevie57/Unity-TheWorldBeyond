@@ -21,7 +21,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Serialization;
 
 namespace Oculus.Interaction
 {
@@ -29,8 +28,7 @@ namespace Oculus.Interaction
     {
         [SerializeField, Interface(typeof(IActiveState))]
         private MonoBehaviour _activeState;
-
-        private IActiveState ActiveState;
+        protected IActiveState ActiveState { get; private set; }
         private bool _selecting = false;
 
         public event Action WhenSelected = delegate { };

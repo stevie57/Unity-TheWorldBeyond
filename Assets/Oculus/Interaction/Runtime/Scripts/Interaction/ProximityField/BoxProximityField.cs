@@ -44,7 +44,6 @@ namespace Oculus.Interaction
             localPoint.z = Mathf.Clamp(localPoint.z, -0.5f, 0.5f);
 
             Vector3 worldPoint = _boxTransform.TransformPoint(localPoint);
-
             return worldPoint;
         }
 

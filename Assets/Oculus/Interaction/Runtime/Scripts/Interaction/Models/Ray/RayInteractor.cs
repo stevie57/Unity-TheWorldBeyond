@@ -36,7 +36,11 @@ namespace Oculus.Interaction
         [SerializeField]
         private float _maxRayLength = 5f;
 
-        private RayCandidate _rayCandidate = null;
+        private RayCandidateProperties _rayCandidateProperties = null;
+
+        private IMovement _movement;
+        private SurfaceHit _movedHit;
+        private Pose _movementHitDelta = Pose.identity;
 
         public Vector3 Origin { get; protected set; }
         public Quaternion Rotation { get; protected set; }
@@ -79,18 +83,18 @@ namespace Oculus.Interaction
             Ray = new Ray(Origin, Forward);
         }
 
-        public class RayCandidate : ICandidatePosition
+        public class RayCandidateProperties : ICandidatePosition
         {
             public RayInteractable ClosestInteractable { get; }
             public Vector3 CandidatePosition { get; }
-            public RayCandidate(RayInteractable closestInteractable, Vector3 candidatePosition)
+            public RayCandidateProperties(RayInteractable closestInteractable, Vector3 candidatePosition)
             {
                 ClosestInteractable = closestInteractable;
                 CandidatePosition = candidatePosition;
             }
         }
 
-        public override object Candidate => _rayCandidate;
+        public override object CandidateProperties => _rayCandidateProperties;
 
         protected override RayInteractable ComputeCandidate()
         {
@@ -118,16 +122,54 @@ namespace Oculus.Interaction
             float rayDist = (closestInteractable != null ? closestDist : MaxRayLength);
             End = Origin + rayDist * Forward;
 
-            _rayCandidate = new RayCandidate(closestInteractable, candidatePosition);
+            _rayCandidateProperties = new RayCandidateProperties(closestInteractable, candidatePosition);
 
             return closestInteractable;
+        }
+
+        protected override void InteractableSelected(RayInteractable interactable)
+        {
+            if (interactable != null)
+            {
+                _movedHit = CollisionInfo.Value;
+                Pose hitPose = new Pose(_movedHit.Point, Quaternion.LookRotation(_movedHit.Normal));
+                Pose backHitPose = new Pose(_movedHit.Point, Quaternion.LookRotation(-_movedHit.Normal));
+                _movement = interactable.GenerateMovement(_rayOrigin.GetPose(), backHitPose);
+                if (_movement != null)
+                {
+                    _movementHitDelta = PoseUtils.Delta(_movement.Pose, hitPose);
+                }
+            }
+            base.InteractableSelected(interactable);
+        }
+
+        protected override void InteractableUnselected(RayInteractable interactable)
+        {
+            if (_movement != null)
+            {
+                _movement.StopAndSetPose(_movement.Pose);
+            }
+            base.InteractableUnselected(interactable);
+            _movement = null;
         }
 
         protected override void DoSelectUpdate()
         {
             RayInteractable interactable = _selectedInteractable;
-            CollisionInfo = null;
 
+            if (_movement != null)
+            {
+                _movement.UpdateTarget(_rayOrigin.GetPose());
+                _movement.Tick();
+                Pose hitPoint = PoseUtils.Multiply(_movement.Pose, _movementHitDelta);
+                _movedHit.Point = hitPoint.position;
+                _movedHit.Normal = hitPoint.forward;
+                CollisionInfo = _movedHit;
+                End = _movedHit.Point;
+                return;
+            }
+
+            CollisionInfo = null;
             if (interactable != null &&
                 interactable.Raycast(Ray, out SurfaceHit hit, MaxRayLength, true))
             {
@@ -142,6 +184,11 @@ namespace Oculus.Interaction
 
         protected override Pose ComputePointerPose()
         {
+            if (_movement != null)
+            {
+                return _movement.Pose;
+            }
+
             if (CollisionInfo != null)
             {
                 Vector3 position = CollisionInfo.Value.Point;

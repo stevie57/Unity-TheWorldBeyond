@@ -18,9 +18,8 @@
  * limitations under the License.
  */
 
-using Oculus.Interaction.DistanceReticles;
 using UnityEngine;
-using Oculus.Interaction.HandPosing;
+using Oculus.Interaction.HandGrab;
 
 public class BallCollectable : MonoBehaviour
 {

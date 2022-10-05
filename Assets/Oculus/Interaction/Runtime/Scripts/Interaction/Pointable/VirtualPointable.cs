@@ -32,7 +32,7 @@ namespace Oculus.Interaction
         [SerializeField]
         private bool _grabFlag;
 
-        public event Action<PointerArgs> WhenPointerEventRaised = delegate { };
+        public event Action<PointerEvent> WhenPointerEventRaised = delegate { };
 
         private UniqueIdentifier _id;
         private bool _currentlyGrabbing;
@@ -49,16 +49,16 @@ namespace Oculus.Interaction
                 _currentlyGrabbing = _grabFlag;
                 if (_currentlyGrabbing)
                 {
-                    WhenPointerEventRaised(new PointerArgs(_id.ID, PointerEvent.Hover,
+                    WhenPointerEventRaised(new PointerEvent(_id.ID, PointerEventType.Hover,
                         transform.GetPose()));
-                    WhenPointerEventRaised(new PointerArgs(_id.ID, PointerEvent.Select,
+                    WhenPointerEventRaised(new PointerEvent(_id.ID, PointerEventType.Select,
                         transform.GetPose()));
                 }
                 else
                 {
-                    WhenPointerEventRaised(new PointerArgs(_id.ID, PointerEvent.Unselect,
+                    WhenPointerEventRaised(new PointerEvent(_id.ID, PointerEventType.Unselect,
                         transform.GetPose()));
-                    WhenPointerEventRaised(new PointerArgs(_id.ID, PointerEvent.Unhover,
+                    WhenPointerEventRaised(new PointerEvent(_id.ID, PointerEventType.Unhover,
                         transform.GetPose()));
                 }
                 return;
@@ -66,7 +66,7 @@ namespace Oculus.Interaction
 
             if (_currentlyGrabbing)
             {
-                WhenPointerEventRaised(new PointerArgs(_id.ID, PointerEvent.Move,
+                WhenPointerEventRaised(new PointerEvent(_id.ID, PointerEventType.Move,
                     transform.GetPose()));
             }
         }

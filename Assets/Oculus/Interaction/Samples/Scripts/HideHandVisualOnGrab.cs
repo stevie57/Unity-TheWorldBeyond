@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-using Oculus.Interaction.HandPosing;
+using Oculus.Interaction.HandGrab;
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;

@@ -18,12 +18,18 @@
  * limitations under the License.
  */
 
-using Oculus.Interaction.HandPosing;
+using Oculus.Interaction.HandGrab;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Oculus.Interaction
 {
+    /// <summary>
+    /// This interactable is used for grabbing items at a distance.
+    /// Upon selection the Movement Provider specifies how the grabber and the grabbable will be aligned, by
+    /// default this can be moving the object towards a controller, but it could also enable other scenarios such as
+    /// moving it with deltas in its own place or allowing a pull motion, etc.
+    /// </summary>
     public class DistanceGrabInteractable : PointerInteractable<DistanceGrabInteractor, DistanceGrabInteractable>,
         IRigidbodyRef, IDistanceInteractable
     {
@@ -43,6 +49,10 @@ namespace Oculus.Interaction
         [SerializeField, Optional]
         private PhysicsGrabbable _physicsGrabbable = null;
 
+        /// <summary>
+        /// The movement provider specifies how the selected interactable will
+        /// align with the grabber.
+        /// </summary>
         [Header("Snap")]
         [SerializeField, Optional, Interface(typeof(IMovementProvider))]
         private MonoBehaviour _movementProvider;
@@ -83,7 +93,7 @@ namespace Oculus.Interaction
 
         protected override void Start()
         {
-            this.BeginStart(ref _started, base.Start);
+            this.BeginStart(ref _started, () => base.Start());
             Assert.IsNotNull(Rigidbody);
             _colliders = Rigidbody.GetComponentsInChildren<Collider>();
             if (MovementProvider == null)
@@ -98,9 +108,9 @@ namespace Oculus.Interaction
             this.EndStart(ref _started);
         }
 
-        public IMovement GenerateAligner(in Pose to)
+        public IMovement GenerateMovement(in Pose to)
         {
-            Pose source = RelativeTo.GetPose();
+            Pose source = _grabSource.GetPose();
             IMovement movement = MovementProvider.CreateMovement();
             movement.StopAndSetPose(source);
             movement.MoveTo(to);

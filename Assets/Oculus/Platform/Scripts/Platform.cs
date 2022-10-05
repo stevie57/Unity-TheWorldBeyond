@@ -566,10 +566,6 @@ namespace Oculus.Platform
     }
   }
 
-  public static partial class AbuseReport
-  {
-  }
-
   public static partial class Achievements
   {
     /// Add 'count' to the achievement with the given name. This must be a COUNT
@@ -928,10 +924,6 @@ namespace Oculus.Platform
 
   }
 
-  public static partial class Avatar
-  {
-  }
-
   public static partial class Cal
   {
   }
@@ -1269,10 +1261,6 @@ namespace Oculus.Platform
 
   }
 
-  public static partial class Colocation
-  {
-  }
-
   public static partial class Entitlements
   {
     /// Returns whether the current user is entitled to the current app.
@@ -1288,10 +1276,6 @@ namespace Oculus.Platform
       return null;
     }
 
-  }
-
-  public static partial class GraphAPI
-  {
   }
 
   public static partial class GroupPresence
@@ -1416,6 +1400,21 @@ namespace Oculus.Platform
       if (Core.IsInitialized())
       {
         return new Request(CAPI.ovr_GroupPresence_Set((IntPtr)groupPresenceOptions));
+      }
+
+      Debug.LogError(Oculus.Platform.Core.PlatformUninitializedError);
+      return null;
+    }
+
+    /// Set the user's deeplink message while keeping the other group presence
+    /// parameters the same. If the destination of the user is not set, the
+    /// deeplink message cannot be set as there's no deeplink message to override.
+    ///
+    public static Request SetDeeplinkMessageOverride(string deeplink_message)
+    {
+      if (Core.IsInitialized())
+      {
+        return new Request(CAPI.ovr_GroupPresence_SetDeeplinkMessageOverride(deeplink_message));
       }
 
       Debug.LogError(Oculus.Platform.Core.PlatformUninitializedError);

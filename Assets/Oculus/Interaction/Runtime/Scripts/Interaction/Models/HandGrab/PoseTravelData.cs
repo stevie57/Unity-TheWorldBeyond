@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
 using System;
 using UnityEngine;
 
-namespace Oculus.Interaction.HandPosing
+namespace Oculus.Interaction.HandGrab
 {
     [Serializable]
     public struct PoseTravelData
@@ -76,7 +76,7 @@ namespace Oculus.Interaction.HandPosing
 
         private static float PerceivedDistance(in Pose from, in Pose to)
         {
-            Pose grabOffset = PoseUtils.RelativeOffset(from, to);
+            Pose grabOffset = PoseUtils.Delta(from, to);
             float translationDistance = grabOffset.position.magnitude;
 
             float rotationDistance = DEGREES_TO_PERCEIVED_METERS * Mathf.Max(

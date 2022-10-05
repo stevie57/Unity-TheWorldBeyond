@@ -63,7 +63,7 @@ namespace Oculus.Interaction
 
         protected override void Start()
         {
-            this.BeginStart(ref _started, base.Start);
+            this.BeginStart(ref _started, () => base.Start());
 
             if (OneGrabTransformer != null)
             {
@@ -90,32 +90,32 @@ namespace Oculus.Interaction
             this.EndStart(ref _started);
         }
 
-        public override void ProcessPointerEvent(PointerArgs args)
+        public override void ProcessPointerEvent(PointerEvent evt)
         {
-            switch (args.PointerEvent)
+            switch (evt.Type)
             {
-                case PointerEvent.Select:
+                case PointerEventType.Select:
                     EndTransform();
                     break;
-                case PointerEvent.Unselect:
+                case PointerEventType.Unselect:
                     EndTransform();
                     break;
-                case PointerEvent.Cancel:
+                case PointerEventType.Cancel:
                     EndTransform();
                     break;
             }
 
-            base.ProcessPointerEvent(args);
+            base.ProcessPointerEvent(evt);
 
-            switch (args.PointerEvent)
+            switch (evt.Type)
             {
-                case PointerEvent.Select:
+                case PointerEventType.Select:
                     BeginTransform();
                     break;
-                case PointerEvent.Unselect:
+                case PointerEventType.Unselect:
                     BeginTransform();
                     break;
-                case PointerEvent.Move:
+                case PointerEventType.Move:
                     UpdateTransform();
                     break;
             }
@@ -174,6 +174,16 @@ namespace Oculus.Interaction
             }
             _activeTransformer.EndTransform();
             _activeTransformer = null;
+        }
+
+        protected override void OnDisable()
+        {
+            if (_started)
+            {
+                EndTransform();
+            }
+
+            base.OnDisable();
         }
 
         #region Inject

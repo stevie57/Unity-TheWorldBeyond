@@ -78,18 +78,18 @@ namespace Oculus.Interaction
             }
         }
 
-        private void HandlePointerEventRaised(PointerArgs args)
+        private void HandlePointerEventRaised(PointerEvent evt)
         {
-            switch (args.PointerEvent)
+            switch (evt.Type)
             {
-                case PointerEvent.Select:
+                case PointerEventType.Select:
                     if (_grabbable.SelectingPointsCount == 1 && !_isBeingTransformed)
                     {
                         DisablePhysics();
                     }
 
                     break;
-                case PointerEvent.Unselect:
+                case PointerEventType.Unselect:
                     if (_grabbable.SelectingPointsCount == 0)
                     {
                         ReenablePhysics();

@@ -20,7 +20,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Oculus.Interaction
 {
@@ -34,6 +36,11 @@ namespace Oculus.Interaction
                                         where TInteractor : Interactor<TInteractor, TInteractable>
                                         where TInteractable : Interactable<TInteractor, TInteractable>
     {
+
+        [SerializeField, Interface(typeof(IGameObjectFilter)), Optional]
+        private List<MonoBehaviour> _interactorFilters = new List<MonoBehaviour>();
+        private List<IGameObjectFilter> InteractorFilters = null;
+
         /// <summary>
         /// The max Interactors and max selecting Interactors that this Interactable can
         /// have acting on it.
@@ -71,14 +78,20 @@ namespace Oculus.Interaction
         }
         #endregion
 
+
+        public IEnumerable<IInteractorView> InteractorViews => _interactors.Cast<IInteractorView>();
+        public IEnumerable<IInteractorView> SelectingInteractorViews => _selectingInteractors.Cast<IInteractorView>();
+
         private HashSet<TInteractor> _interactors = new HashSet<TInteractor>();
         private HashSet<TInteractor> _selectingInteractors = new HashSet<TInteractor>();
 
-        public event Action WhenInteractorsCountUpdated = delegate { };
-        public event Action WhenSelectingInteractorsCountUpdated = delegate { };
-
         private InteractableState _state = InteractableState.Disabled;
         public event Action<InteractableStateChangeArgs> WhenStateChanged = delegate { };
+
+        public event Action<IInteractorView> WhenInteractorViewAdded = delegate { };
+        public event Action<IInteractorView> WhenInteractorViewRemoved = delegate { };
+        public event Action<IInteractorView> WhenSelectingInteractorViewAdded = delegate { };
+        public event Action<IInteractorView> WhenSelectingInteractorViewRemoved = delegate { };
 
         private MultiAction<TInteractor> _whenInteractorAdded = new MultiAction<TInteractor>();
         private MultiAction<TInteractor> _whenInteractorRemoved = new MultiAction<TInteractor>();
@@ -115,34 +128,33 @@ namespace Oculus.Interaction
 
         protected virtual void InteractorAdded(TInteractor interactor)
         {
+            WhenInteractorViewAdded(interactor);
             _whenInteractorAdded.Invoke(interactor);
         }
         protected virtual void InteractorRemoved(TInteractor interactor)
         {
+            WhenInteractorViewRemoved(interactor);
             _whenInteractorRemoved.Invoke(interactor);
         }
 
         protected virtual void SelectingInteractorAdded(TInteractor interactor)
         {
+            WhenSelectingInteractorViewAdded(interactor);
             _whenSelectingInteractorAdded.Invoke(interactor);
         }
         protected virtual void SelectingInteractorRemoved(TInteractor interactor)
         {
+            WhenSelectingInteractorViewRemoved(interactor);
             _whenSelectingInteractorRemoved.Invoke(interactor);
         }
 
-        public int InteractorsCount => _interactors.Count;
+        public ICollection<TInteractor> Interactors => _interactors;
 
-        public int SelectingInteractorsCount => _selectingInteractors.Count;
-
-        public IEnumerable<TInteractor> Interactors => _interactors;
-
-        public IEnumerable<TInteractor> SelectingInteractors => _selectingInteractors;
+        public ICollection<TInteractor> SelectingInteractors => _selectingInteractors;
 
         public void AddInteractor(TInteractor interactor)
         {
             _interactors.Add(interactor);
-            WhenInteractorsCountUpdated();
             InteractorAdded(interactor);
             UpdateInteractableState();
         }
@@ -154,7 +166,6 @@ namespace Oculus.Interaction
                 return;
             }
             interactor.InteractableChangesUpdate();
-            WhenInteractorsCountUpdated();
             InteractorRemoved(interactor);
             UpdateInteractableState();
         }
@@ -162,7 +173,6 @@ namespace Oculus.Interaction
         public void AddSelectingInteractor(TInteractor interactor)
         {
             _selectingInteractors.Add(interactor);
-            WhenSelectingInteractorsCountUpdated();
             SelectingInteractorAdded(interactor);
             UpdateInteractableState();
         }
@@ -174,7 +184,6 @@ namespace Oculus.Interaction
                 return;
             }
             interactor.InteractableChangesUpdate();
-            WhenSelectingInteractorsCountUpdated();
             SelectingInteractorRemoved(interactor);
             UpdateInteractableState();
         }
@@ -183,11 +192,11 @@ namespace Oculus.Interaction
         {
             if (State == InteractableState.Disabled) return;
 
-            if (SelectingInteractorsCount > 0)
+            if (_selectingInteractors.Count > 0)
             {
                 State = InteractableState.Select;
             }
-            else if (InteractorsCount > 0)
+            else if (_interactors.Count > 0)
             {
                 State = InteractableState.Hover;
             }
@@ -205,16 +214,29 @@ namespace Oculus.Interaction
             }
 
             if (MaxSelectingInteractors >= 0 &&
-                SelectingInteractorsCount == MaxSelectingInteractors)
+                _selectingInteractors.Count == MaxSelectingInteractors)
             {
                 return false;
             }
 
             if (MaxInteractors >= 0 &&
-                InteractorsCount == MaxInteractors &&
+                _interactors.Count == MaxInteractors &&
                 !_interactors.Contains(interactor))
             {
                 return false;
+            }
+
+            if (InteractorFilters == null)
+            {
+                return true;
+            }
+
+            foreach (IGameObjectFilter interactorFilter in InteractorFilters)
+            {
+                if (!interactorFilter.Filter(interactor.gameObject))
+                {
+                    return false;
+                }
             }
 
             return true;
@@ -263,7 +285,7 @@ namespace Oculus.Interaction
             _registry.Unregister((TInteractable)this);
         }
 
-        public void RemoveInteractorById(int id)
+        public void RemoveInteractorByIdentifier(int id)
         {
             TInteractor foundInteractor = null;
             foreach (TInteractor selectingInteractor in _selectingInteractors)
@@ -299,6 +321,20 @@ namespace Oculus.Interaction
             RemoveInteractor(foundInteractor);
         }
 
+        protected virtual void Awake()
+        {
+            InteractorFilters =
+                _interactorFilters.ConvertAll(mono => mono as IGameObjectFilter);
+        }
+
+        protected virtual void Start()
+        {
+            foreach (IGameObjectFilter filter in InteractorFilters)
+            {
+                Assert.IsNotNull(filter);
+            }
+        }
+
         protected virtual void OnEnable()
         {
             Enable();
@@ -321,5 +357,14 @@ namespace Oculus.Interaction
             }
             _registry = registry;
         }
+
+        #region Inject
+        public void InjectOptionalInteractorFilters(List<IGameObjectFilter> interactorFilters)
+        {
+            InteractorFilters = interactorFilters;
+            _interactorFilters = interactorFilters.ConvertAll(interactorFilter =>
+                                    interactorFilter as MonoBehaviour);
+        }
+        #endregion
     }
 }

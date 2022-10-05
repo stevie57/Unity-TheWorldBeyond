@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
 using System;
 using UnityEngine;
 
-namespace Oculus.Interaction.HandPosing
+namespace Oculus.Interaction.Grab
 {
     [Serializable]
     public struct PoseMeasureParameters
@@ -42,5 +42,7 @@ namespace Oculus.Interaction.HandPosing
             _maxDistance = maxDistance;
             _positionRotationWeight = positionRotationWeight;
         }
+
+        public static readonly PoseMeasureParameters DEFAULT = new PoseMeasureParameters(0.1f, 0f);
     }
 }

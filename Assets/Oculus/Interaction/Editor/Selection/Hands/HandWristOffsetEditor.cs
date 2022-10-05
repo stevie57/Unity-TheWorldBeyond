@@ -18,7 +18,6 @@
  * limitations under the License.
  */
 
-using Oculus.Interaction.Input;
 using UnityEditor;
 using UnityEngine;
 
@@ -35,6 +34,9 @@ namespace Oculus.Interaction.Editor
         private SerializedProperty _relativeTransformProperty;
 
         private Pose _cachedPose;
+
+        private static readonly Quaternion LEFT_MIRROR_ROTATION = Quaternion.Euler(180f, 0f, 0f);
+
 
         private void Awake()
         {
@@ -60,14 +62,14 @@ namespace Oculus.Interaction.Editor
                 Pose offset;
                 if (gripPoint != _wristOffset.transform)
                 {
-                    offset = _wristOffset.transform.RelativeOffset(gripPoint);
+                    offset = _wristOffset.transform.Delta(gripPoint);
                 }
                 else
                 {
                     offset = _wristOffset.transform.GetPose(Space.Self);
                 }
-                _rotationProperty.quaternionValue = FromOVRHandDataSource.WristFixupRotation * offset.rotation;
-                _offsetPositionProperty.vector3Value = FromOVRHandDataSource.WristFixupRotation * offset.position;
+                _rotationProperty.quaternionValue = LEFT_MIRROR_ROTATION * offset.rotation;
+                _offsetPositionProperty.vector3Value = LEFT_MIRROR_ROTATION * offset.position;
             }
 
             serializedObject.ApplyModifiedProperties();
@@ -79,7 +81,7 @@ namespace Oculus.Interaction.Editor
             _cachedPose.rotation = _wristOffset.Rotation;
 
             Pose wristPose = _wristOffset.transform.GetPose();
-            wristPose.rotation = wristPose.rotation * FromOVRHandDataSource.WristFixupRotation;
+            wristPose.rotation = wristPose.rotation * LEFT_MIRROR_ROTATION;
             _cachedPose.Postmultiply(wristPose);
             DrawAxis(_cachedPose);
         }

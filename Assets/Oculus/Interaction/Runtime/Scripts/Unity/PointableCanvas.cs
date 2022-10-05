@@ -19,6 +19,8 @@
  */
 
 using UnityEngine;
+using UnityEngine.Assertions;
+using UnityEngine.UI;
 
 namespace Oculus.Interaction
 {
@@ -34,6 +36,14 @@ namespace Oculus.Interaction
         public Canvas Canvas => _canvas;
 
         private bool _registered = false;
+
+        protected override void Start()
+        {
+            base.Start();
+            Assert.IsNotNull(Canvas);
+            Assert.IsNotNull(Canvas.GetComponent<GraphicRaycaster>(),
+        "PointableCanvas requires that the Canvas object has an attached GraphicRaycaster.");
+        }
 
         private void Register()
         {
@@ -65,5 +75,19 @@ namespace Oculus.Interaction
             }
             base.OnDisable();
         }
+
+        #region Inject
+
+        public void InjectAllPointableCanvas(Canvas canvas)
+        {
+            InjectCanvas(canvas);
+        }
+
+        public void InjectCanvas(Canvas canvas)
+        {
+            _canvas = canvas;
+        }
+
+        #endregion
     }
 }

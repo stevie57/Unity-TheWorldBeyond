@@ -8,7 +8,7 @@ In this sample project, you'll learn how to take advantage of our Presence Platf
 * Mac or Windows
 
 ## Getting Started
-* *PCs:* You can run the Unity Editor using Oculus Link if you are on a PC. Keep in mind that the Passthrough image only appears in the headset. Scene API doesn't yet work on PC, so it uses a fake room box. You can edit the room’s corner positions by moving the spheres on the VirtualRoom prefab.
+* *PCs:* You can run the Unity Editor using Oculus Link if you are on a PC. Keep in mind that the Passthrough image only appears in the headset. For Scene API, room data must exist before connecting device; disconnect Oculus Link, run Room Setup on your Quest, then reconnect Oculus Link.
 * *Macs:* If you are on a Mac, you must build an apk and deploy it to your device.
 
 # Health & Safety Guidelines
@@ -72,7 +72,7 @@ In The World Beyond, the system unlocks Voice control after opening a wall to th
 
 # Interaction
 You can easily include hands-support using our Interaction components with little understanding of how the code works. You can learn more about the *Interaction SDK* from our documentation [here](https://developer.oculus.com/documentation/unity/unity-isdk-interaction-sdk-overview/). In The World Beyond, we use the *Interaction SDK* to let users grab and release the energy orbs.
-* The system requires *OVRCameraRig*, which exists under the *InteractionRigOVR-Basic* prefab. There are important fields on the *WorldBeyondManager* game object that point to children of this interaction rig, so be careful when replacing it.
+* The *OVRInteraction* object exists under the *OVRCameraRig* prefab. There are important fields on the *WorldBeyondManager* game object that point to children of this interaction rig, so be careful when replacing it.
 * The ball prefab, which is the only element in The World Beyond designed for usage with *ISDK*, is located in `Assets/VFX/EnergyBall/BouncingBall.prefab`. Please note that the *Interaction SDK* manages many of the components on the object.
 * Other hand behaviors, such as wall opening or toy switching, are custom and exist outside of *ISDK*. This functionality shows that you can mix and match how you want to implement hands in your project.
 

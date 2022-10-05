@@ -90,10 +90,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9a7676b01585ce43908639a27765dfc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _interactorFilters: []
   _maxInteractors: -1
   _maxSelectingInteractors: -1
   _pointableElement: {fileID: 5464942884579530895}
-  _relativeTo: {fileID: 3931749881970468470}
   _rigidbody: {fileID: 413594911}
   _resetGrabOnGrabsUpdated: 1
   _physicsGrabbable: {fileID: 0}
@@ -117,7 +117,7 @@ MonoBehaviour:
     _unselectMode: 0
   _movementProvider: {fileID: 0}
   _handAligment: 0
-  _handGrabPoints: []
+  _handGrabPoses: []
 --- !u!114 &4274931287498166372
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -130,10 +130,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: baed3e011583e1844a6e85b1cd0657f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _interactorFilters: []
   _maxInteractors: -1
   _maxSelectingInteractors: -1
   _pointableElement: {fileID: 5464942884579530895}
-  _relativeTo: {fileID: 3931749881970468470}
   _rigidbody: {fileID: 413594911}
   _resetGrabOnGrabsUpdated: 1
   _physicsGrabbable: {fileID: 0}
@@ -153,8 +153,8 @@ MonoBehaviour:
     _pinkyRequirement: 1
     _unselectMode: 0
   _movementProvider: {fileID: 111923330405047835}
-  _handAligment: 2
-  _handGrabPoints: []
+  _handAligment: 1
+  _handGrabPoses: []
 --- !u!114 &111923330405047835
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -696,7 +696,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _wallID: -1
-  rigidBody: {fileID: 413594911}
   _rigidBody: {fileID: 413594911}
   _popFXprefab: {fileID: 2676838558268672091, guid: a8878efc1226e134fa16f9b427e6ea18, type: 3}
   _passthroughImpactFXprefab: {fileID: 2048033875605025811, guid: 3d257d3b77d7069488f1464518c72acb, type: 3}
@@ -5483,10 +5482,16 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  _whenInteractorsCountUpdated:
+  _whenInteractorViewAdded:
     m_PersistentCalls:
       m_Calls: []
-  _whenSelectingInteractorsCountUpdated:
+  _whenInteractorViewRemoved:
+    m_PersistentCalls:
+      m_Calls: []
+  _whenSelectingInteractorViewAdded:
+    m_PersistentCalls:
+      m_Calls: []
+  _whenSelectingInteractorViewRemoved:
     m_PersistentCalls:
       m_Calls: []
 --- !u!199 &6188217495472548525

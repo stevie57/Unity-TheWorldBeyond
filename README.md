@@ -84,4 +84,4 @@ Audio in The World Beyond uses the *Oculus AudioManager* and *Oculus Spatializer
 
 
 ## Licenses
-The [Oculus License](./LICENSE) applies to the SDK and supporting material. The [MIT License](./Assets/Scripts/LICENSE) applies to only certain, clearly marked documents. If an individual file does not indicate which license it is subject to, then the Oculus License applies.
+The [Meta License](./LICENSE) applies to the SDK and supporting material. The [MIT License](./Assets/Scripts/LICENSE) applies to only certain, clearly marked documents. If an individual file does not indicate which license it is subject to, then the Meta License applies.

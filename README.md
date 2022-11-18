@@ -76,12 +76,47 @@ You can easily include hands-support using our Interaction components with littl
 * The ball prefab, which is the only element in The World Beyond designed for usage with *ISDK*, is located in `Assets/VFX/EnergyBall/BouncingBall.prefab`. Please note that the *Interaction SDK* manages many of the components on the object.
 * Other hand behaviors, such as wall opening or toy switching, are custom and exist outside of *ISDK*. This functionality shows that you can mix and match how you want to implement hands in your project.
 
-
 # Audio Spatializer
 Audio in The World Beyond uses the *Oculus AudioManager* and *Oculus Spatializer*. Get a deep understanding of it from our documentation [here](https://developer.oculus.com/documentation/unity/audio-spatializer-features/). The mixer for the project exists at `Assets/Audio/SanctuaryAudioMixer.mixer`.
 * You can use simple raycasting for occlusion. For instance, if a sound is in the virtual world behind your Passthrough wall. You can see how we do this in [`SoundEntry_Manager.HandleObstructed()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/SoundEntry_Manager.cs#L94).
 * The system mutes environment audio when all the Passthrough walls are closed. The audio increases as you open each wall. Anytime a wall status changes, the system adjusts the audio accordingly in [`AudioManager.SetRoomOpenness()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/AudioManager.cs#L444).
 
+# Sample Scenes
+The main scene to build is "TheWorldBeyond.unity." To simplify the development experience, there are much smaller scenes in the project to use as starters. These are located in the [SampleScenes](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/SampleScenes) folder:
 
-## Licenses
+## Passthrough Pet
+If you'd like to explore augmented pet behavior, you can start here. It provides the Scene elements as occluding colliders, so Oppy convincingly renders behind and avoids furniture. A NavMesh is created for her to walk on, and pressing the index trigger on the right controller sets a target towards which she navigates. You can learn more about Unity’s navigation system from [their documentation.](https://docs.unity3d.com/Manual/nav-NavigationSystem.html)
+![Passthrough Pet](./Media/ScreenshotPassthroughPet.png "Passthrough Pet")
+* NavMesh created from Scene objects in [`NavMeshSurface.BuildNavMesh()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/SamplePetExperience.cs#L47)
+* Pet walking via [`NavMeshAgent.SetDestination()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/SamplePetExperience.cs#L72)
+* Animation controller to demonstrate switching between idle/running
+* Occlusions using Scene objects, provided by the prefabs in this scene's `OVRSceneManager`
+* Control character look direction with [`SamplePet.DoLookAtBehavior()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/SamplePet.cs#L101)
+* Blob shadow to help visually ground virtual content
+
+## Passthrough Room
+Scene elements are loaded, and then the wall/ceiling/door/window game objects are destroyed. A modified ball shooter demonstrates collision with Scene elements. This scene can serve as a base for when your room is the center of a VR playspace; for example, an enemy wave shooter where you must use your furniture as cover from incoming fire.
+![Passthrough Room](./Media/ScreenshotPassthroughRoom.png "Passthrough Room")
+* Floor outline as mesh via `OVRScenePlaneMeshFilter`
+* Grass distribution using floor outline and exterior space, in [`SampleBoundaryDebris.CreateBoundaryDebris()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/SampleBoundaryDebris.cs#L79) and [`SampleBoundaryDebris.CreateExteriorDebris()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/SampleBoundaryDebris.cs#L113)
+* Virtual objects culled when within room
+* [`VolumeAndPlaneSwitcher`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Oculus/SampleFramework/Usage/SceneManager/Scripts/VolumeAndPlaneSwitcher.cs) to automatically convert plane anchors (Deck, Couch) to volumes
+
+## Virtual Frames
+Rendering a virtual world outside of your windows can be achieved with rendering tricks shown in this scene. All that is required is prefabs similar to the overrides in this scene's OVRSceneManager. The virtual environment renders first, then the frame-and-depth-occluder prefab where windows and doors are. Finally the Scene walls render 0 to alpha, which reveal Passthrough. This works because of the specific material render queues; 2998 for the depth quad (after other opaque objects) and 2999 for the passthrough walls.
+![Virtual Frames](./Media/ScreenshotVirtualFrames.png "Virtual Frames")
+* Furniture resizer to demonstrate consistent frame width
+* Floor fade material at door base
+* Grass at door perimeter, instantiated in [`SampleDoorDebris.SpawnDebris()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/SampleDoorDebris.cs#L43)
+* User notification if missing door or windows in Scene data
+
+## Voice Transcription
+To demo some Voice SDK basics, this sample transcribes the user's speech to text. It also includes a button supported by the Interaction SDK, as well as a text dialog prefab for developers to provide more information to users.
+![Voice Transcription](./Media/ScreenshotVoiceTranscription.png "Voice Transcription")
+* Get text transcriptions from the [Voice SDK](https://developer.oculus.com/documentation/unity/voice-sdk-overview/)
+* Unity Canvas using hands or controllers, powered by the [Interaction SDK](https://developer.oculus.com/documentation/unity/unity-isdk-interaction-sdk-overview/)
+* *SampleNotif* prefab, for displaying information and requesting user action
+* Sample code for checking and requesting microphone permissions in [`SampleVoice.CheckPermissionsAndContinue()`](https://github.com/oculus-samples/Unity-TheWorldBeyond/blob/main/Assets/Scripts/SampleVoice.cs#L87)
+
+# Licenses
 The [Meta License](./LICENSE) applies to the SDK and supporting material. The [MIT License](./Assets/Scripts/LICENSE) applies to only certain, clearly marked documents. If an individual file does not indicate which license it is subject to, then the Meta License applies.
